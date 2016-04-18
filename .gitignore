@@ -1,3 +1,4 @@
 applicationTokens.json
 *.pyc
 *.*~
+tweets/*.json

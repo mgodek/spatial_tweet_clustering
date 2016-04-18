@@ -6,6 +6,7 @@ from tweepy.streaming import StreamListener
 
 import simplejson
 import json
+import os
 
 class AccessTokens:
     # Go to http://apps.twitter.com and create an app.
@@ -32,8 +33,11 @@ class AccessTokens:
         #read from json
         with open(tokenFileName) as json_file:
             json_data = json.load(json_file)
-            print(json_data)
+            #print(json_data)
             self.consumer_key=json_data["consumer_key"]
+            self.consumer_secret=json_data["consumer_secret"]
+            self.access_token=json_data["access_token"]
+            self.access_token_secret=json_data["access_token_secret"]
             print(self.__dict__)
 
 aTok = AccessTokens("applicationTokens.json")
@@ -44,7 +48,17 @@ class StdOutListener(StreamListener):
     This is a basic listener that just prints received tweets to stdout.
     """
     def on_data(self, data):
-        print(data)
+	#use https://git-lfs.github.com/ to store collected data
+    	#gather tweets and save them to file
+        jsonData = json.loads(data);
+        print(jsonData)
+        directory="tweets"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+	
+        if 'id' in data:
+	    with open(directory+"/"+str(jsonData["id"])+".json", 'w') as outfile:
+                json.dump(jsonData, outfile)
         return True
 
     def on_error(self, status):
@@ -56,5 +70,5 @@ if __name__ == '__main__':
     auth.set_access_token(aTok.access_token, aTok.access_token_secret)
 
     stream = Stream(auth, l)
-    stream.filter(track=['basketball'])
+    stream.filter(languages=["en"], locations=[-180.0,-90.0,180.0,90.0])
 
