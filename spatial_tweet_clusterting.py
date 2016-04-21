@@ -55,8 +55,11 @@ class StdOutListener(StreamListener):
         directory="tweets"
         if not os.path.exists(directory):
             os.makedirs(directory)
-	
-        if 'id' in data:
+	# there is a bug here. if more then one tweet was loaded, then (I'm guessing)
+        # only the first ID will be used to store data, and therefore there will be multiple entries in one file.
+        # jsonData has to be splitted into seperate objects - too bad that Stream doesn't send data as an array...
+        # It seems to just send one tweet-object after another.
+        if 'id' in data: 
 	    with open(directory+"/"+str(jsonData["id"])+".json", 'w') as outfile:
                 json.dump(jsonData, outfile)
         return True
