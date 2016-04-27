@@ -1,77 +1,155 @@
 from __future__ import absolute_import, print_function
 
-from tweepy import OAuthHandler
-from tweepy import Stream
-from tweepy.streaming import StreamListener
+import sys, os
 
-import simplejson
-import json
-import os
+import tweetFetcher
 
-class AccessTokens:
-    # Go to http://apps.twitter.com and create an app.
-    # The consumer key and secret will be generated for you after
-    consumer_key=""#read json file, which will not be added to git
-    consumer_secret=""
-    # The access tokens can be found on your applications's Details
-    # page located at https://dev.twitter.com/apps (located
-    # under "Your access token")
-    access_token=""
-    access_token_secret=""
+import signal
+
+import time
+
+import subprocess
+
+def signal_handler(signal, frame):
+	print('You pressed Ctrl+C!')
+        #sys.exit(0)
+	main_menu()
+
+def main_menu():
+    os.system('clear')
     
-    def __init__(self, tokenFileName):
-        self.consumer_key=""
-        self.consumer_secret=""
-        self.access_token=""
-        self.access_token_secret=""
-        #save to json
-        #jsondata = simplejson.dumps(aTok.__dict__, indent=4, skipkeys=True, sort_keys=True)
-        #fd = open("applicationTokens.json", 'w')
-        #fd.write(jsondata)
-        #fd.close()
-        
-        #read from json
-        with open(tokenFileName) as json_file:
-            json_data = json.load(json_file)
-            #print(json_data)
-            self.consumer_key=json_data["consumer_key"]
-            self.consumer_secret=json_data["consumer_secret"]
-            self.access_token=json_data["access_token"]
-            self.access_token_secret=json_data["access_token_secret"]
-            print(self.__dict__)
+    print ("Please choose the function you want to start:")
+    print ("1. Fetch tweets")
+    print ("2. Fetch tweets periodically")
+    print ("3. Cluster tweets naive")
+    print ("4. Cluster tweets less naive")
+    print ("5. View results")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+ 
+    return
 
-aTok = AccessTokens("applicationTokens.json")
+menu_actions  = {}
+
+def exec_menu(choice):
+    os.system('clear')
+    ch = choice.lower()
+    if ch == '':
+        menu_actions['main_menu']()
+    else:
+        try:
+            menu_actions[ch]()
+        except KeyError:
+            print ("Wrong selection, please try again.")
+            menu_actions['main_menu']()
+    return
+
+def fetchTweetsMenu():
+    amount = 1000
+    print ("Fetching ", amount, " tweets !")
+    
+    try:
+        tweetFetcher.fetchTweets(amount)
+    except KeyboardInterrupt, e:
+        print( "Interrupted" )
+    
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
+ 
+def fetchTweetsPeriodicallyMenu():
+    amount = 5000
+    hours = 2
+    times = 12
+    print ("Fetching ", amount, " tweets periodically every ", hours, " hours!")
+
+    for x in range(1, times):
+        print( "Round ", x, " out of ", times )
+        try:
+            tweetFetcher.fetchTweets(amount)
+        except KeyboardInterrupt, e:
+            print( "Interrupted" )
+
+	if x + 1 < times:
+            print( "Waiting ", hours, " hours for round ", x, " out of ", times )
+            time.sleep(60)
 
 
-class StdOutListener(StreamListener):
-    """ A listener handles tweets that are received from the stream.
-    This is a basic listener that just prints received tweets to stdout.
-    """
-    def on_data(self, data):
-	#use https://git-lfs.github.com/ to store collected data
-    	#gather tweets and save them to file
-        jsonData = json.loads(data);
-        print(jsonData)
-        directory="tweets"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-	# there is a bug here. if more then one tweet was loaded, then (I'm guessing)
-        # only the first ID will be used to store data, and therefore there will be multiple entries in one file.
-        # jsonData has to be splitted into seperate objects - too bad that Stream doesn't send data as an array...
-        # It seems to just send one tweet-object after another.
-        if 'id' in data: 
-	    with open(directory+"/"+str(jsonData["id"])+".json", 'w') as outfile:
-                json.dump(jsonData, outfile)
-        return True
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
 
-    def on_error(self, status):
-        print(status)
+def clusterTweetsNaiveMenu():
+    print ("Clustering tweets naive approach !")
 
-if __name__ == '__main__':
-    l = StdOutListener()
-    auth = OAuthHandler(aTok.consumer_key, aTok.consumer_secret)
-    auth.set_access_token(aTok.access_token, aTok.access_token_secret)
+    print ( "TODO" )
 
-    stream = Stream(auth, l)
-    stream.filter(languages=["en"], locations=[-180.0,-90.0,180.0,90.0])
+    # Define command and arguments
+    command = 'Rscript'
+    path2script = 'clusterNaive.R'
 
+    # Variable number of args in a list
+    args = ['11', '3', '9', '42']
+
+    # Build subprocess command
+    cmd = [command, path2script] + args
+
+    # check_output will run the command and store to result
+    x = subprocess.check_output(cmd, universal_newlines=True)
+
+    print('The maximum of the numbers is:', x)
+
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
+
+def clusterTweetsLessNaiveMenu():
+    print ("Clustering tweets less naive approach !")
+
+    print ( "TODO" )
+
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
+
+def viewResultsMenu():
+    print ("Viewing results !")
+
+    print ( "TODO" )
+
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
+
+def back():
+    menu_actions['main_menu']()
+
+def exit():
+    sys.exit()
+ 
+# Menu definition
+menu_actions = {
+    'main_menu': main_menu,
+    '1': fetchTweetsMenu,
+    '2': fetchTweetsPeriodicallyMenu,
+    '3': clusterTweetsNaiveMenu,
+    '4': clusterTweetsLessNaiveMenu,
+    '5': viewResultsMenu,
+    '9': back,
+    '0': exit,
+}
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    main_menu()
