@@ -75,7 +75,7 @@ def fetchTweetsPeriodicallyMenu():
 
 	if x + 1 < times:
             print( "Waiting ", hours, " hours for round ", x, " out of ", times )
-            time.sleep(60)
+            time.sleep(3600*hours)
 
 
     print ("9. Back")
