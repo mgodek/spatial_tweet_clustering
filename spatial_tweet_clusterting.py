@@ -10,6 +10,8 @@ import time
 
 import subprocess
 
+from time import gmtime, strftime
+
 def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
         #sys.exit(0)
@@ -65,6 +67,7 @@ def fetchTweetsPeriodicallyMenu():
     hours = 2
     times = 12
     print ("Fetching ", amount, " tweets periodically every ", hours, " hours!")
+    strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
     for x in range(1, times):
         print( "Round ", x, " out of ", times )
@@ -74,7 +77,7 @@ def fetchTweetsPeriodicallyMenu():
             print( "Interrupted" )
 
 	if x + 1 < times:
-            print( "Waiting ", hours, " hours for round ", x, " out of ", times )
+            print( "Waiting ", hours, " hours for round ", x+1, " out of ", times )
             time.sleep(3600*hours)
 
 
@@ -85,13 +88,13 @@ def fetchTweetsPeriodicallyMenu():
     return
 
 def clusterTweetsNaiveMenu():
-    print ("Clustering tweets naive approach !")
+    print ("Clustering tweets with Clara - naive approach !")
 
     print ( "TODO" )
 
     # Define command and arguments
     command = 'Rscript'
-    path2script = 'clusterNaive.R'
+    path2script = 'clusterClara.R'
 
     # Variable number of args in a list
     args = ['11', '3', '9', '42']
@@ -111,7 +114,7 @@ def clusterTweetsNaiveMenu():
     return
 
 def clusterTweetsLessNaiveMenu():
-    print ("Clustering tweets less naive approach !")
+    print ("Clustering tweets with Clara - less naive approach !")
 
     print ( "TODO" )
 
