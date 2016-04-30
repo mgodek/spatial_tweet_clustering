@@ -88,13 +88,13 @@ def fetchTweetsPeriodicallyMenu():
     return
 
 def clusterTweetsNaiveMenu():
-    print ("Clustering tweets naive approach !")
+    print ("Clustering tweets with Clara - naive approach !")
 
     print ( "TODO" )
 
     # Define command and arguments
     command = 'Rscript'
-    path2script = 'clusterNaive.R'
+    path2script = 'clusterClara.R'
 
     # Variable number of args in a list
     args = ['11', '3', '9', '42']
@@ -114,7 +114,7 @@ def clusterTweetsNaiveMenu():
     return
 
 def clusterTweetsLessNaiveMenu():
-    print ("Clustering tweets less naive approach !")
+    print ("Clustering tweets with Clara - less naive approach !")
 
     print ( "TODO" )
 
