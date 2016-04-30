@@ -10,6 +10,8 @@ import time
 
 import subprocess
 
+from time import gmtime, strftime
+
 def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
         #sys.exit(0)
@@ -65,6 +67,7 @@ def fetchTweetsPeriodicallyMenu():
     hours = 2
     times = 12
     print ("Fetching ", amount, " tweets periodically every ", hours, " hours!")
+    strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
     for x in range(1, times):
         print( "Round ", x, " out of ", times )
@@ -74,7 +77,7 @@ def fetchTweetsPeriodicallyMenu():
             print( "Interrupted" )
 
 	if x + 1 < times:
-            print( "Waiting ", hours, " hours for round ", x, " out of ", times )
+            print( "Waiting ", hours, " hours for round ", x+1, " out of ", times )
             time.sleep(3600*hours)
 
 
