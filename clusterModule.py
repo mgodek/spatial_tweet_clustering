@@ -1,5 +1,6 @@
 # clusterModule.py
 
+from __future__ import absolute_import, print_function
 import rpy2
 import rpy2.robjects as robjects
 
@@ -28,12 +29,26 @@ def setupCluster():
             utils.install_packages(StrVector(packnames_to_install))
 
 def clusterClara(x, k):
-    print( "Clara with ", k, " groups" )
+    print ( "Clara with ", k, " groups" )
 
-#clarax <- clara(x, k, samples=50)
-#clarax
-#clarax$clusinfo
-## using pamLike=TRUE  gives the same (apart from the 'call'):
-#all.equal(clarax[-8],
-#          clara(x, k, samples=50, pamLike = TRUE)[-8])
-#plot(clarax)
+    robjects.r('''
+        execClara <- function(r, verbose=FALSE) {
+            if (verbose) {
+                cat("I am calling execClara().\n")
+            }
+            2 * pi * r
+            #clarax <- clara(x, k, samples=50)
+            #clarax
+            #clarax$clusinfo
+            ## using pamLike=TRUE  gives the same (apart from the 'call'):
+            #all.equal(clarax[-8],
+            #          clara(x, k, samples=50, pamLike = TRUE)[-8])
+            #plot(clarax)
+        }
+        
+        execClara(3)
+    ''')
+    
+    r_execClara = robjects.globalenv['execClara']
+    print(r_execClara.r_repr())
+    return
