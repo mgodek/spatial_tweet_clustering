@@ -42,10 +42,6 @@ class AccessTokens:
             self.access_token_secret=json_data["access_token_secret"]
             print(self.__dict__)
 
-aTok = AccessTokens("applicationTokens.json")
-
-maxAmount = 0
-
 class StdOutListener(StreamListener):
 
     def __init__(self):
@@ -88,6 +84,7 @@ def fetchTweets(amount):
     maxAmount = amount
     
     l = StdOutListener()
+    aTok = AccessTokens("applicationTokens.json")
     auth = OAuthHandler(aTok.consumer_key, aTok.consumer_secret)
     auth.set_access_token(aTok.access_token, aTok.access_token_secret)
     stream = Stream(auth, l)
