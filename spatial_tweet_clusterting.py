@@ -1,14 +1,13 @@
 from __future__ import absolute_import, print_function
 
-import sys, os
-
+import sys, os, signal, time
 import tweetFetcher
+import clusterModule
+import tweetTransform
 
-import signal
-
-import time
-
-import subprocess
+from tweetTransform import stemData, makeMatrixFiles
+from clusterModule import setupCluster, clusterClara
+from time import gmtime, strftime
 
 from time import gmtime, strftime
 
@@ -23,9 +22,10 @@ def main_menu():
     print ("Please choose the function you want to start:")
     print ("1. Fetch tweets")
     print ("2. Fetch tweets periodically")
-    print ("3. Cluster tweets naive")
-    print ("4. Cluster tweets less naive")
-    print ("5. View results")
+    print ("3. Prepare tweets for clustering")
+    print ("4. Cluster tweets naive")
+    print ("5. Cluster tweets less naive")
+    print ("6. View results")
     print ("0. Quit")
     choice = raw_input(" >>  ")
     exec_menu(choice)
@@ -87,25 +87,41 @@ def fetchTweetsPeriodicallyMenu():
     exec_menu(choice)
     return
 
+<<<<<<< HEAD
+def transformTweetDataMenu():
+    print ( "Transforming raw json tweets to R input" )
+=======
 def clusterTweetsNaiveMenu():
     print ("Clustering tweets with Clara - naive approach !")
+>>>>>>> 7d1c5b52a941192d2fbdd7d047f4b597732539c2
 
-    print ( "TODO" )
+    stemData()
+    makeMatrixFiles()    
 
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
+
+<<<<<<< HEAD
+def clusterTweetsNaiveMenu():
+    print ("Clustering tweets with Clara - naive approach !")
+=======
     # Define command and arguments
     command = 'Rscript'
     path2script = 'clusterClara.R'
+>>>>>>> 7d1c5b52a941192d2fbdd7d047f4b597732539c2
 
-    # Variable number of args in a list
-    args = ['11', '3', '9', '42']
+    print ( "Checking setup status" )
 
-    # Build subprocess command
-    cmd = [command, path2script] + args
+    setupCluster()
 
-    # check_output will run the command and store to result
-    x = subprocess.check_output(cmd, universal_newlines=True)
+    print ("How many clusters do You want to create?")
+    k = raw_input(" >>  ")
 
-    print('The maximum of the numbers is:', x)
+    tweetMatrix = 0 #TODO
+    clusterClara(tweetMatrix, k)
 
     print ("9. Back")
     print ("0. Quit")
@@ -146,9 +162,10 @@ menu_actions = {
     'main_menu': main_menu,
     '1': fetchTweetsMenu,
     '2': fetchTweetsPeriodicallyMenu,
-    '3': clusterTweetsNaiveMenu,
-    '4': clusterTweetsLessNaiveMenu,
-    '5': viewResultsMenu,
+    '3': transformTweetDataMenu,
+    '4': clusterTweetsNaiveMenu,
+    '5': clusterTweetsLessNaiveMenu,
+    '6': viewResultsMenu,
     '9': back,
     '0': exit,
 }
