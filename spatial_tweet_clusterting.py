@@ -87,13 +87,8 @@ def fetchTweetsPeriodicallyMenu():
     exec_menu(choice)
     return
 
-<<<<<<< HEAD
 def transformTweetDataMenu():
     print ( "Transforming raw json tweets to R input" )
-=======
-def clusterTweetsNaiveMenu():
-    print ("Clustering tweets with Clara - naive approach !")
->>>>>>> 7d1c5b52a941192d2fbdd7d047f4b597732539c2
 
     stemData()
     makeMatrixFiles()    
@@ -104,14 +99,8 @@ def clusterTweetsNaiveMenu():
     exec_menu(choice)
     return
 
-<<<<<<< HEAD
 def clusterTweetsNaiveMenu():
     print ("Clustering tweets with Clara - naive approach !")
-=======
-    # Define command and arguments
-    command = 'Rscript'
-    path2script = 'clusterClara.R'
->>>>>>> 7d1c5b52a941192d2fbdd7d047f4b597732539c2
 
     print ( "Checking setup status" )
 
