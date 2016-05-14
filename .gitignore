@@ -3,3 +3,4 @@ applicationTokens.json
 *.*~
 tweets/*.json
 tfidf/.k4dev
+cmake_tfidf/*

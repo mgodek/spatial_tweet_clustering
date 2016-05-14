@@ -5,6 +5,7 @@ import tweetFetcher
 import clusterModule
 import tweetTransform
 
+import numpy as np
 from tweetTransform import stemData, makeMatrixFiles
 from clusterModule import setupCluster, clusterClara
 from time import gmtime, strftime
@@ -20,12 +21,13 @@ def main_menu():
     os.system('clear')
     
     print ("Please choose the function you want to start:")
-    print ("1. Fetch tweets")
-    print ("2. Fetch tweets periodically")
-    print ("3. Prepare tweets for clustering")
-    print ("4. Cluster tweets naive")
-    print ("5. Cluster tweets less naive")
-    print ("6. View results")
+    print ("1. Run setup")
+    print ("2. Fetch tweets")
+    print ("3. Fetch tweets periodically")
+    print ("4. Prepare tweets for clustering")
+    print ("5. Cluster tweets naive")
+    print ("6. Cluster tweets less naive")
+    print ("7. View results")
     print ("0. Quit")
     choice = raw_input(" >>  ")
     exec_menu(choice)
@@ -45,6 +47,21 @@ def exec_menu(choice):
         except KeyError:
             print ("Wrong selection, please try again.")
             menu_actions['main_menu']()
+    return
+
+def setup():
+    print ( "Running setup" )
+    #TODO run start.sh ?
+    
+    if os.getuid() == 0:
+        setupCluster()
+    else:
+	print ("This program is not run as sudo so this function will not work")
+
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
     return
 
 def fetchTweetsMenu():
@@ -102,15 +119,10 @@ def transformTweetDataMenu():
 def clusterTweetsNaiveMenu():
     print ("Clustering tweets with Clara - naive approach !")
 
-    print ( "Checking setup status" )
-
-    setupCluster()
-
     print ("How many clusters do You want to create?")
     k = raw_input(" >>  ")
 
-    tweetMatrix = 0 #TODO
-    clusterClara(tweetMatrix, k)
+    clusterClara("path to data matrix", k)
 
     print ("9. Back")
     print ("0. Quit")
@@ -149,12 +161,13 @@ def exit():
 # Menu definition
 menu_actions = {
     'main_menu': main_menu,
-    '1': fetchTweetsMenu,
-    '2': fetchTweetsPeriodicallyMenu,
-    '3': transformTweetDataMenu,
-    '4': clusterTweetsNaiveMenu,
-    '5': clusterTweetsLessNaiveMenu,
-    '6': viewResultsMenu,
+    '1': setup,
+    '2': fetchTweetsMenu,
+    '3': fetchTweetsPeriodicallyMenu,
+    '4': transformTweetDataMenu,
+    '5': clusterTweetsNaiveMenu,
+    '6': clusterTweetsLessNaiveMenu,
+    '7': viewResultsMenu,
     '9': back,
     '0': exit,
 }
