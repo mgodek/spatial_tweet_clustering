@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sudo pip install geojson
 sudo pip install tweepy
 sudo pip install rpy2
 

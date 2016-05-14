@@ -2,3 +2,4 @@ applicationTokens.json
 *.pyc
 *.*~
 tweets/*.json
+tfidf/.k4dev
