@@ -4,6 +4,13 @@ sudo pip install geojson
 sudo pip install tweepy
 sudo pip install rpy2
 
+mkdir cmake_tfidf
+cd cmake_tfidf
+cmake ../tfidf
+make
+./tfidf -help
+cd ..
+
 FILE="tweets.tar.gz"
 
 if [ -f $FILE ];
