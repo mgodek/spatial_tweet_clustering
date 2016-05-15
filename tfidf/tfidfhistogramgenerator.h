@@ -1,7 +1,7 @@
 #ifndef TFIDFHISTOGRAMGENERATOR_H
 #define TFIDFHISTOGRAMGENERATOR_H
 
-#include "exceptions/ioexception.h"
+#include <exceptions/ioexception.h>
 
 #include <list>
 #include <unordered_map>
