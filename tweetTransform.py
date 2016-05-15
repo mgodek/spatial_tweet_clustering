@@ -62,13 +62,27 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
     print( "Stemming data in all files" )
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
-            f = open(file, 'r')
+            f = open(os.path.join(root, file), 'r')
             allLines = ''
             for line in f:
                 allLines = '{0}{1}'.format(allLines,line)
-            tweet = json.loads(allLines, object_hook=tweet_decoder)
+            #TODO this line fails? tweet = json.loads(allLines, object_hook=tweet_decoder)
             print( "TODO stemming of text and place here" ) #TODO pathToStemmedTweets
-            yield tweet
+	    
+            # run C code
+            from ctypes import cdll
+	    lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
+
+	    class TFIDF(object):
+	        def __init__(self):
+		    self.obj = lib.TFIDF_New()
+
+	        def parse(self):
+		    lib.TFIDF_Run(self.obj)
+
+	    tfidf = TFIDF()
+            tfidf.parse() #TODO maybe just pass filename to parser?
+            #yield tweet
 
 def makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile):
     print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature, featureListing: each row is a word-feature mapping to column features in matrixEntries -> tweetsFeatureListFile) of all files" ) #TODO

@@ -35,7 +35,7 @@ StemmedFileInMemoryParser::~StemmedFileInMemoryParser()
     }
 }
 
-bool StemmedFileInMemoryParser::loadData(const char *fileName)
+bool StemmedFileInMemoryParser::loadData(const char* fileName)
 {
     std::ifstream in(fileName, std::ios::in);
     if(!in.is_open())
@@ -119,7 +119,7 @@ void StemmedFileInMemoryParser::countTfidf()
     this->quant = this->minimalValue / 4;
 }
 
-bool StemmedFileInMemoryParser::storeTfidfInFile(const char *fileName)
+bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
 {
     std::ofstream out(fileName, std::ios::trunc | std::ios::out);
     if(!out.is_open())
@@ -139,4 +139,5 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char *fileName)
     out << std::ends;
     out.flush();
     out.close();
+    return true;
 }

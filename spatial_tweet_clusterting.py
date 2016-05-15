@@ -7,15 +7,17 @@ import tweetTransform
 
 import numpy as np
 from tweetTransform import stemData, makeMatrixFiles
-from clusterModule import setupCluster, clusterClara
+from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 
 from time import gmtime, strftime
 
-pathToRawTweets       = "tweets/"
-pathToStemmedTweets   = "tweetsStemmed/"
-tweetsMatrixFile      = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
-tweetsFeatureListFile = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
+pathToRawTweets        = "tweets/"
+pathToStemmedTweets    = "tweetsStemmed/"
+tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
+tweetsFeatureListFile  = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
+clusterNaiveResultFile = "claraOutputNaive.txt"
+clusterLessNResultFile = "claraOutputLessN.txt"
 
 def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
@@ -127,7 +129,7 @@ def clusterTweetsNaiveMenu():
     print ("How many clusters do You want to create?")
     k = raw_input(" >>  ")
 
-    clusterClara(tweetsMatrixFile, k)
+    clusterClara(tweetsMatrixFile, k, clusterNaiveResultFile)
 
     print ("9. Back")
     print ("0. Quit")
@@ -143,7 +145,7 @@ def clusterTweetsLessNaiveMenu():
     print ("How many clusters do You want to create?")
     k = raw_input(" >>  ")
 
-    clusterClara(tweetsMatrixFile, k)
+    clusterClara(tweetsMatrixFile, k, clusterLessNResultFile)
 
     print ("9. Back")
     print ("0. Quit")
@@ -154,7 +156,8 @@ def clusterTweetsLessNaiveMenu():
 def viewResultsMenu():
     print ("Viewing results !")
 
-    print ( "TODO" )
+    clusterResults(clusterNaiveResultFile)
+    clusterResults(clusterLessNResultFile)
 
     print ("9. Back")
     print ("0. Quit")

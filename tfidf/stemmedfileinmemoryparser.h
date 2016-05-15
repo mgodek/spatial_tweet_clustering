@@ -44,4 +44,19 @@ protected:
 
 };
 
+extern "C" {
+    StemmedFileInMemoryParser* TFIDF_New()
+    {
+	return new StemmedFileInMemoryParser();
+    }
+
+    void TFIDF_Run( StemmedFileInMemoryParser* parser )
+    {
+        const char* fileName = "bla"; // TODO pass as param
+	parser->loadData(fileName);
+	parser->countTfidf();
+	parser->storeTfidfInFile(fileName);
+    }
+}
+
 #endif // STEMMEDFILEINMEMORYPARSER_H
