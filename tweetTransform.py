@@ -58,19 +58,18 @@ def tweet_decoder(obj):
     tweet.coords = obj['coordinates']
     return tweet
 
-def stemData():
-    print( "TODO stem data in all files" )
-    pathStr = 'tweets/'
-    for root, dirs, files in os.walk(pathStr, topdown=False):
+def stemData(pathToRawTweets, pathToStemmedTweets):
+    print( "Stemming data in all files" )
+    for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
             f = open(file, 'r')
             allLines = ''
             for line in f:
                 allLines = '{0}{1}'.format(allLines,line)
             tweet = json.loads(allLines, object_hook=tweet_decoder)
-            # TODO stemming of text and place here
+            print( "TODO stemming of text and place here" ) #TODO pathToStemmedTweets
             yield tweet
 
-def makeMatrixFiles():
-    print( "TODO generate files being a matrix representation (matrixEntries: each row is a tweet, each column is a feature, featureListing: each row is a word-feature mapping to column features in matrixEntries) of all files" )
+def makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile):
+    print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature, featureListing: each row is a word-feature mapping to column features in matrixEntries -> tweetsFeatureListFile) of all files" ) #TODO
     return 

@@ -30,27 +30,23 @@ def setupCluster():
             utils.install_packages(StrVector(packnames))
             print ( "installing ", packnames )
 
-def clusterClara(filename, k):
+def clusterClara(tweetsMatrixFile, k):
     print ( "Clara with ", k, " groups" )
 
     r_execClara = robjects.r('''
       library(cluster)
-      #TODO load filename
-      function(x, k, verbose=TRUE) {
-         if (verbose) {
-            cat("I am calling execClara().\n")
-         }
-         x <- rbind(cbind(rnorm(200,0,8), rnorm(200,0,8)), cbind(rnorm(300,50,8), rnorm(300,50,8)))         
+      function(x, k) {         
+         x <- read.table('claraTweetsMatrixFile.txt') #TODO how to pass tweetsMatrixFile name?
          clarax <- clara(x, k, samples=50)
          clarax
          clarax$clusinfo
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
-         all.equal(clarax[-8],
-                   clara(x, k, samples=50, pamLike = TRUE)[-8])
+         #all.equal(clarax[-8], clara(x, k, samples=50, pamLike = TRUE)[-8])
          plot(clarax)
+	 save(clarax,file="claraOutput.txt")
      }
     ''')
     
-    r_execClara(filename,k)
-    print(r_execClara.r_repr())
+    r_execClara(tweetsMatrixFile,k)
+    #print(r_execClara.r_repr())
     return

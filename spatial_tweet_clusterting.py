@@ -12,6 +12,11 @@ from time import gmtime, strftime
 
 from time import gmtime, strftime
 
+pathToRawTweets       = "tweets/"
+pathToStemmedTweets   = "tweetsStemmed/"
+tweetsMatrixFile      = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
+tweetsFeatureListFile = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
+
 def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
         #sys.exit(0)
@@ -107,8 +112,8 @@ def fetchTweetsPeriodicallyMenu():
 def transformTweetDataMenu():
     print ( "Transforming raw json tweets to R input" )
 
-    stemData()
-    makeMatrixFiles()    
+    stemData(pathToRawTweets, pathToStemmedTweets)
+    makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile)    
 
     print ("9. Back")
     print ("0. Quit")
@@ -122,7 +127,7 @@ def clusterTweetsNaiveMenu():
     print ("How many clusters do You want to create?")
     k = raw_input(" >>  ")
 
-    clusterClara("path to data matrix", k)
+    clusterClara(tweetsMatrixFile, k)
 
     print ("9. Back")
     print ("0. Quit")
@@ -133,7 +138,12 @@ def clusterTweetsNaiveMenu():
 def clusterTweetsLessNaiveMenu():
     print ("Clustering tweets with Clara - less naive approach !")
 
-    print ( "TODO" )
+    print ( "TODO need to scale features!" ) #TODO
+
+    print ("How many clusters do You want to create?")
+    k = raw_input(" >>  ")
+
+    clusterClara(tweetsMatrixFile, k)
 
     print ("9. Back")
     print ("0. Quit")

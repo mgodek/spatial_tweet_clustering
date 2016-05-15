@@ -2,5 +2,6 @@ applicationTokens.json
 *.pyc
 *.*~
 tweets/*.json
+tweetsStemmed/*
 tfidf/.k4dev
 cmake_tfidf/*
