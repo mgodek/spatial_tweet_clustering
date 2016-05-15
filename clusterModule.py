@@ -30,23 +30,32 @@ def setupCluster():
             utils.install_packages(StrVector(packnames))
             print ( "installing ", packnames )
 
-def clusterClara(tweetsMatrixFile, k):
+def clusterClara(tweetsMatrixFile, k, outputFile):
     print ( "Clara with ", k, " groups" )
 
     r_execClara = robjects.r('''
       library(cluster)
-      function(x, k) {         
-         x <- read.table('claraTweetsMatrixFile.txt') #TODO how to pass tweetsMatrixFile name?
+      function(tweetsMatrixFile, k, outputFile) {         
+         x <- read.table(tweetsMatrixFile)
          clarax <- clara(x, k, samples=50)
-         clarax
-         clarax$clusinfo
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
          #all.equal(clarax[-8], clara(x, k, samples=50, pamLike = TRUE)[-8])
          plot(clarax)
-	 save(clarax,file="claraOutput.txt")
+	 save(clarax,file=outputFile)
      }
     ''')
     
-    r_execClara(tweetsMatrixFile,k)
-    #print(r_execClara.r_repr())
+    r_execClara(tweetsMatrixFile,k, outputFile)
+    return
+
+def clusterResults(clusterDataFile):
+    print ( "Show clustering result" )
+
+    r_execShowResults = robjects.r('''
+      function(outputFileName) {         
+	 clarax <- load(outputFileName)
+         plot(clarax) #TODO need to check how to load and save data frame data. This approach fails
+     }
+    ''')
+    r_execShowResults(clusterDataFile)
     return

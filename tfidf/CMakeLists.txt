@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
 project(tfidf)
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11 -fpic -O3" )
 
 file( GLOB_RECURSE TFIDF_FILES
-      *h
-      *cpp
+      stemmedfileinmemoryparser.h
+      stemmedfileinmemoryparser.cpp
 )
 
-add_executable(tfidf ${TFIDF_FILES})
-
-install(TARGETS tfidf RUNTIME DESTINATION bin)
+add_library(tfidf SHARED ${TFIDF_FILES})
