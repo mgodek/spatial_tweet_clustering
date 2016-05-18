@@ -6,6 +6,8 @@ import json
 import os
 import sys
 
+###############################################################################
+
 class TweetsCoordinates:
     COORDS_STEM_PREFIX = "COORDS"
     def __init__(self, obj):
@@ -20,6 +22,8 @@ class TweetsCoordinates:
     def get_stemmed(self):
         return format('{0}{1}{2}', self.COORDS_STEM_PREFIX, round(longitude), round(latitude))
 
+###############################################################################
+
 class TweetsPlace:
     """ Place related to the tweet. It doesn't have to be a place of tweet origin.
     The tweet may simply refer to some place.
@@ -31,10 +35,13 @@ class TweetsPlace:
         self.full_name = full_name # city and state
         self.name = name #city
         self.place_type = place_type # e.g. city
+
+###############################################################################
         
 def place_decoder(obj):
     return TweetsPlace(obj['country'], obj['full_name'], obj['name'], obj['place_type'])
 
+###############################################################################
 
 class TweetForClustering:
     """This class is meant to represent essential tweet data
@@ -58,38 +65,49 @@ def tweet_decoder(obj):
     tweet.coords = obj['coordinates']
     return tweet
 
+###############################################################################
+
 def stemData(pathToRawTweets, pathToStemmedTweets):
-    print( "Prepare data in all files" )
+    print( "Stem data in all files" )
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
-            f = open(os.path.join(root, file), 'r')
-            allLines = ''
-            for line in f:
-                allLines = '{0}{1}'.format(allLines,line)
-            #tweet = json.loads(allLines, object_hook=tweet_decoder) #TODO this line fails?
-            print( "TODO stemming of text and place here" ) #TODO pathToStemmedTweets
+            fullFileName = os.path.join(root, file)
+            f = open(fullFileName, 'r')
+            allLines = f.read().replace('\n', '')
+            #for line in f:
+            #    allLines = '{0}{1}'.format(allLines,line)
+            tweet = json.loads(allLines)#, object_hook=tweet_decoder)
+            #print json.dumps(tweet, indent=4, sort_keys=True)
 
             # run C code for stemming
-            print( "Stem file" )
+            #print( "Stem file" )
             from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
-            lib.stem("fileIn", "fileOut") #TODO maybe just pass filename to parser?
+            lib.stem(fullFileName, pathToStemmedTweets+file)
 
-            # run C code for tfidf
-            print( "TFIDF file" )
-            from ctypes import cdll
+###############################################################################
+
+def tfidfData(pathToStemmedTweets):
+    print( "TFIDF data in all files" )
+    for root, dirs, files in os.walk(pathToStemmedTweets, topdown=False):
+        for file in files:
+            fullFileName = os.path.join(root, file)
+
+	    # run C code for tfidf
+	    from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
 
 	    class TFIDF(object):
-	        def __init__(self):
+		def __init__(self):
 		    self.obj = lib.TFIDF_New()
 
-	        def parse(self):
-		    lib.TFIDF_Run(self.obj)
+		def parse(self, fullFileName):
+		    lib.TFIDF_Run(self.obj, fullFileName)
 
 	    tfidf = TFIDF()
-            tfidf.parse() #TODO maybe just pass filename to parser?
-            #yield tweet
+	    tfidf.parse(fullFileName) 
+
+###############################################################################
 
 def makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile):
     print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature, featureListing: each row is a word-feature mapping to column features in matrixEntries -> tweetsFeatureListFile) of all files" ) #TODO

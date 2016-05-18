@@ -18,6 +18,8 @@ cmake ../libstemmer_c
 make
 cd ..
 
+mkdir tweetsStemmed
+
 FILE="tweets.tar.gz"
 
 if [ -f $FILE ];

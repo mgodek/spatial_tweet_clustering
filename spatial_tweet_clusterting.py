@@ -6,7 +6,7 @@ import clusterModule
 import tweetTransform
 
 import numpy as np
-from tweetTransform import stemData, makeMatrixFiles
+from tweetTransform import stemData, tfidfData, makeMatrixFiles
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 
@@ -21,7 +21,7 @@ clusterLessNResultFile = "claraOutputLessN.txt"
 
 def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
-        #sys.exit(0)
+	#sys.exit(0)
 	main_menu()
 
 def main_menu():
@@ -114,7 +114,16 @@ def fetchTweetsPeriodicallyMenu():
 def transformTweetDataMenu():
     print ( "Transforming raw json tweets to R input" )
 
-    stemData(pathToRawTweets, pathToStemmedTweets)
+    print ( "Stem raw data? Y/n" )
+    choice = raw_input(" >>  ")
+    if choice == 'Y':
+        stemData(pathToRawTweets, pathToStemmedTweets)
+
+    print ( "TFIDF stemmed data? Y/n" )
+    choice = raw_input(" >>  ")
+    if choice == 'Y':
+        tfidfData(pathToStemmedTweets)
+
     makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile)    
 
     print ("9. Back")

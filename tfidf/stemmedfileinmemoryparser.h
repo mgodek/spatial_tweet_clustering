@@ -50,9 +50,8 @@ extern "C" {
 	return new StemmedFileInMemoryParser();
     }
 
-    void TFIDF_Run( StemmedFileInMemoryParser* parser )
+    void TFIDF_Run( StemmedFileInMemoryParser* parser, const char* fileName )
     {
-        const char* fileName = "bla"; // TODO pass as param
 	parser->loadData(fileName);
 	parser->countTfidf();
 	parser->storeTfidfInFile(fileName);
