@@ -121,6 +121,7 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
             # run C code for stemming
             from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
+            #TODO put tweet to stem instead of what is under fullFileName
             lib.stem(fullFileName, pathToStemmedTweets+file)
 
 ###############################################################################
