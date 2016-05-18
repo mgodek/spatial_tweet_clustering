@@ -5,5 +5,6 @@ tweets/*.json
 tweetsStemmed/*
 tfidf/.k4dev
 cmake_tfidf/*
+cmake_stemmer/*
 claraOutputNaive.txt
 claraOutputLessN.txt

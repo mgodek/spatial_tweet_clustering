@@ -58,18 +58,25 @@ def tweet_decoder(obj):
     tweet.coords = obj['coordinates']
     return tweet
 
-def stemData(pathToRawTweets, pathToStemmedTweets):
-    print( "Stemming data in all files" )
+def stemData(pathToRawTweets, pathToStemmedTweets): # TODO this function does not work
+    print( "Prepare data in all files" )
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
             f = open(os.path.join(root, file), 'r')
             allLines = ''
             for line in f:
                 allLines = '{0}{1}'.format(allLines,line)
-            #TODO this line fails? tweet = json.loads(allLines, object_hook=tweet_decoder)
+            #tweet = json.loads(allLines, object_hook=tweet_decoder) #TODO this line fails?
             print( "TODO stemming of text and place here" ) #TODO pathToStemmedTweets
-	    
-            # run C code
+
+            # run C code for stemming
+            print( "Stem file" )
+            from ctypes import cdll
+	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
+            lib.stem("fileIn", "fileOut") #TODO maybe just pass filename to parser?
+
+            # run C code for tfidf
+            print( "TFIDF file" )
             from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
 
