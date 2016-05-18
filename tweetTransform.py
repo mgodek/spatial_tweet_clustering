@@ -58,7 +58,7 @@ def tweet_decoder(obj):
     tweet.coords = obj['coordinates']
     return tweet
 
-def stemData(pathToRawTweets, pathToStemmedTweets): # TODO this function does not work
+def stemData(pathToRawTweets, pathToStemmedTweets):
     print( "Prepare data in all files" )
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:

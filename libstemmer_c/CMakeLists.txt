@@ -17,7 +17,6 @@ include_directories(
 
 file( GLOB_RECURSE STEMMER_FILES
       examples/stemwords.c
-      snowball_sources
 )
 
-add_library(stemmer SHARED ${STEMMER_FILES})
+add_library(stemmer SHARED ${STEMMER_FILES} ${snowball_sources})
