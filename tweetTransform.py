@@ -12,16 +12,17 @@ class TweetsCoordinates:
     COORDS_STEM_PREFIX = "COORDS"
     def __init__(self, isValid=False, obj=''):
         self.isValid = isValid
-        if 'coordinates' in obj and \
-            len(obj['coordinates']) == 2 and \
-                'type' in obj and obj['type'] == 'Point':
-            self.longitude = obj['coordinates'][0]
-            self.latitude = obj['coordinates'][1]
-        else:
-            self.isValid = False
-            print ('TweetsCoordinates fail')
-            #print (obj)
-            #raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
+        if isValid == True:
+		if 'coordinates' in obj and \
+		    len(obj['coordinates']) == 2 and \
+		        'type' in obj and obj['type'] == 'Point':
+		    self.longitude = obj['coordinates'][0]
+		    self.latitude = obj['coordinates'][1]
+		else:
+		    self.isValid = False
+		    print ('TweetsCoordinates fail: coordinates are wrong')
+		    #print (obj)
+		    #raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
     
     def get_stemmed(self):
         return format('{0}{1}{2}', self.COORDS_STEM_PREFIX, round(longitude), round(latitude))
@@ -34,11 +35,10 @@ class TweetsPlace:
     Bounding box is defined as geoJSON, therefore for now skipping it.
     """
     PLACE_STEM_PREFIX = "PLACE"
-    def __init__(self, isValid=False, country='', full_name='', name='', place_type='', coordinates=TweetsCoordinates()):
+    def __init__(self, isValid=False, country='', full_name='', place_type='', coordinates=TweetsCoordinates()):
         self.isValid = isValid
         self.country = country       # country full name
         self.full_name = full_name   # city and state
-        self.name = name             # city name
         self.place_type = place_type # e.g. city
         if coordinates.isValid == False:
             self.isValid = False
@@ -53,12 +53,11 @@ def place_decoder(obj):
         print( obj, 'place_decoder is not iterable' )
         return TweetsPlace()
 
-    if 'country' and 'full_name' and 'name' and 'place_type' and 'coordinates' in obj_iterator:
-	    return TweetsPlace(True, obj['country'], obj['full_name'],
-		               obj['name'], obj['place_type'],
-		               TweetsCoordinates(True, obj['coordinates']))
+    if 'country' and 'full_name' and 'place_type' and 'bounding_box' in obj_iterator:
+	    return TweetsPlace(True, obj['country'], obj['full_name'], obj['place_type'],
+		               TweetsCoordinates(True, obj['bounding_box']))
     else:
-        print ('place_decoder fail')
+        print ('place_decoder fail: missing country, full_name, place_type or bounding_box')
         print (obj)
         return TweetsPlace()
 
@@ -69,18 +68,17 @@ class TweetForClustering:
     needed for clustering algorithms.
     """   
 
-    def __init__(self, isValid=False, tweetId=0, coordinates=[], lang='NA', text='', placeObj=''):
+    def __init__(self, isValid=False, tweetId=0, text='', placeObj=''):
         self.isValid = isValid
         self.tweetId = tweetId
-        self.coords = coordinates
-        self.lang = lang # language code
         self.text = text # utf-8 text
-        try:
-            obj_iterator = iter(placeObj)
-            self.place = place_decoder(placeObj['place'])
-        except TypeError, te:
-            print( placeObj, 'TweetForClustering is not iterable' )
-            self.isValid = False
+        if isValid == True:
+		try:
+		    obj_iterator = iter(placeObj)
+		    self.place = place_decoder(placeObj)
+		except TypeError, te:
+		    print( 'TweetForClustering: placeObj is not iterable %s' % placeObj )
+		    self.isValid = False
 
 ###############################################################################
 
@@ -91,11 +89,11 @@ def tweet_decoder(obj):
         print( obj, 'tweet_decoder is not iterable' )
         return TweetForClustering()
    
-    if 'id_str' and 'lang' and 'text' and 'place' in obj_iterator:
-        tweet = TweetForClustering(True, obj['id_str'], obj['lang'], obj['text'], obj)
+    if 'id_str' and 'text' and 'place' in obj_iterator:
+        tweet = TweetForClustering(True, obj['id_str'], obj['text'], obj['place'])
         return tweet
     else:
-        print ('tweet_decoder fail')
+        print ('tweet_decoder fail: missing id_str or text or place')
         #print (obj) #json.dumps(obj, indent=4, sort_keys=False)
         return TweetForClustering()
 
@@ -107,8 +105,12 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
         for file in files:
             fullFileName = os.path.join(root, file)
             f = open(fullFileName, 'r')
-            allLines = f.read()#.replace('\n', ' ') # TODO
+            # TODO how to open the file?
+            # option 1
+            allLines = f.read()
             tweet = json.loads(allLines, object_hook=tweet_decoder)
+            # option 2
+            #json.load(f, object_hook=tweet_decoder)
 
 	    if tweet.isValid == False:
                 print("Invalid object file: %s" % file)
@@ -118,11 +120,15 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
                     print( allLines )
                 continue
 
+            outfile = open(fullFileName+"stem", 'w')
+#            tweet >> outfile TODO save object as string to file
+            outfile.close()
+
             # run C code for stemming
             from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
-            #TODO put tweet to stem instead of what is under fullFileName
-            lib.stem(fullFileName, pathToStemmedTweets+file)
+
+            lib.stem(fullFileName+"stem", pathToStemmedTweets+file)
 
 ###############################################################################
 

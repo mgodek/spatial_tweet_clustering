@@ -65,6 +65,7 @@ class StdOutListener(StreamListener):
         if 'id_str' in data:
             with open(directory+"/"+jsonData["id_str"]+".json", 'w') as outfile:
                 json.dump(jsonData, outfile)
+                outfile.close()
 
         self.num_tweets += 1
         if self.num_tweets > self.amount:
