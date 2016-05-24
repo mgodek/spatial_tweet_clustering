@@ -2,6 +2,7 @@ from rpy2.robjects.packages import importr, data
 import ctypes
 import numpy
 
+import re, string, timeit
 import shutil
 from pprint import pprint
 import simplejson
@@ -12,14 +13,14 @@ import sys
 ###############################################################################
 
 class TweetsCoordinates:
-    COORDS_STEM_PREFIX = "COORDS"
+    #COORDS_STEM_PREFIX = "COORDS"
     def __init__(self, isValid=False, obj=''):
         self.isValid = isValid
         if isValid == True:
             if 'coordinates' in obj : # and len(obj['coordinates']) >= 2 :
                 coor = obj['coordinates']
-                self.longitude = float(coor[0][0])
-                self.latitude = float(coor[0][1])
+                self.longitude = float(coor[0][0][0])
+                self.latitude = float(coor[0][0][1])
             else:
                 self.isValid = False
                 print ('TweetsCoordinates fail: coordinates are wrong')
@@ -27,6 +28,12 @@ class TweetsCoordinates:
     def get_stemmed(self):
         return [format('{0}_{1}', self.COORDS_STEM_PREFIX, round(self.longitude)),\
             format('{0}_{1}', self.COORDS_STEM_PREFIX, round(self.latitude))]
+    
+    def toString(self):
+        summary  = str(round(self.longitude))
+        summary += " "
+        summary += str(round(self.latitude))
+        return summary
 
 ###############################################################################
 
@@ -45,10 +52,22 @@ class TweetsPlace:
             self.isValid = False
         self.coordinates = coordinates
         
+         
     def get_stemmed(self, stemFunc, stemmer):
         return [str(stemFunc(stemmer, self.country, len(self.country))), \
             str(stemFunc(stemmer, self.full_name, len(self.full_name))), \
                 str(stemFunc(stemmer, self.place_type, len(self.place_type)))] + self.coordinates.get_stemmed()
+    
+    def toString(self):
+        summary  = self.country
+        summary += " "
+        summary += self.full_name
+        summary += " "
+        summary += self.place_type
+        summary += " "
+        #print( "type ", type(self.coordinates.longitude), self.coordinates.longitude )
+        summary += self.coordinates.toString()
+        return summary
 
 ###############################################################################
         
@@ -86,14 +105,22 @@ class TweetForClustering:
 	    except TypeError, te:
                 print('Argument passed to TweetForClustering is not dict: %s' % str(placeObj))
                 print('arguemnt type is %s instead' % type(placeObj))
-		self.isValid = False
-            
+                self.isValid = Falseself.isValid = False
+     
     def get_stemmed(self, stemFunc, stemmer):
         results = self.place.get_stemmed(stemFunc, stemmer)
         for word in self.text.split(" "):
             results.append(str(stemFunc(stemmer, word, len(word))))
-            
     
+    def dump(obj):
+        for attr in dir(obj):
+            print "obj.%s = %s" % (attr, getattr(obj, attr))
+
+    def toString(self):
+        summary  = self.text
+        summary += " "
+        summary += self.place.toString()
+        return summary
 
 ###############################################################################
 
@@ -143,38 +170,94 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
     doStemming.restype = ctypes.c_char_p
     stemmer_p = createStemmer("en", "UTF_8")
     print( "Crawling and stemming files" )
-    for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
-        for file in files:
-            print("Filtering object file: %s" % file)
-            fullFileName = os.path.join(root, file)
-            f = open(fullFileName, 'r')
-            try:
-                tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
-            except ValueError, ve:
-                print( "Decoding error ", json.dumps(f.read()) )
-                continue
+	    f = open(fullFileName, 'r')
+	    try:
+		tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
+	    except ValueError, ve:
+		print( "Decoding error ", json.dumps(f.read()) )
+		continue
             if tweet.isValid == False:
-                print("Invalid object file: %s" % file)
-                try:
+		print("Invalid object file: %s" % file)
+		try:
 
                     print( json.dump(tweet, indent=4, sort_keys=False))
-                except TypeError, te:
-		    print( json.load(f) )
-                continue
+		except TypeError, te:
+		    print( f.read() )
+		    f.close()
+		continue
             stemmedData = tweet.get_stemmed(doStemming, stemmer_p)
             results.append({'id' : tweet.id, 'data': stemmedData})
-            print("Stemming object file: %s" % file)
+	    #print("Stemming object file: %s" % file)
             #readyForStem = fullFileName.replace( "/tweets/", "/tweetsTemp/" )
             #outfile = open(readyForStem, 'w')
-            #tweet >> outfile TODO save object as string to file
+	    outfile = open(fileForStem, 'w')
             #outfile.close()
             #lib.stem(readyForStem, pathToStemmedTweets+file)
             f.close()
     deleteStemmer(stemmer_p)
     print ( "removed stemmer, storing stuff to %s" %pathToStemmedTweets)
     storeStemmedData(pathToStemmedTweets, results)
-    logging.flush()
+    #logging.flush()
 
+    def stemData_CONFLICT(pathToRawTweets, pathToStemmedTweets):
+    print( "Stem data in all files" )
+    shutil.rmtree( "tweetsTemp" )
+    os.mkdir("tweetsTemp")
+        
+    for file in os.listdir(pathToRawTweets):
+	    print( '{0}\r'.format("Processing object file: %s" % file) ),
+	    #print( "Processing object file: %s" % file )
+	    fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file #os.path.join(root, file)
+	    f = open(fullFileName, 'r')
+	    
+	    # TODO how to open the file?
+	    # option 1
+	    #allLines = f.read()
+	    #tweet = json.loads(allLines, object_hook=tweet_decoder)
+	    # option 2
+	    try:
+		tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
+	    except ValueError, ve:
+		print( "Decoding error ", json.dumps(f.read()) )
+		continue
+
+	    if tweet.isValid == False:
+		print("Invalid object file: %s" % file)
+		try:
+		    #print json.dumps(allLines, indent=4, sort_keys=False)
+		    print json.dump(tweet, indent=4, sort_keys=False)
+		except TypeError, te:
+		    #print( allLines )
+		    print( f.read() )
+		    f.close()
+		continue
+	    f.close()
+
+	    #print("Stemming object file: %s" % file)
+	    fileForStem = fullFileName.replace( "tweets", "tweetsTemp" )
+	    #print( "temp %s" % fileForStem )
+	    outfile = open(fileForStem, 'w')
+	    #print( " %s " % tweet.toString() )
+	    exclude = set(string.punctuation)
+	    tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude) # remove punctuations
+	    #print( "tweetForStem: %s" % tweetForStem ) 
+	    outfile.write(''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])) # discard unicode specific characters
+	    #print( " %s " % tweetForStem )
+	    outfile.close()
+
+	    # run C code for stemming
+	    from ctypes import cdll
+	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
+
+	    ret = lib.stem(fileForStem, pathToStemmedTweets+"/"+file)
+	    #print( "stem ret ", ret )
+
+    print # go to next line
+    
+    
+	    #print( "stem ret ", ret )
+
+    print # go to next line
 ###############################################################################
 
 def tfidfData(pathToStemmedTweets):

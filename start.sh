@@ -6,12 +6,14 @@ sudo pip install geojson
 sudo pip install tweepy
 sudo pip install rpy2
 
+rm -rf cmake_tfidf
 mkdir cmake_tfidf
 cd cmake_tfidf
 cmake ../tfidf
 make
 cd ..
 
+rm -rf cmake_stemmer
 mkdir cmake_stemmer
 cd cmake_stemmer
 cmake ../libstemmer_c

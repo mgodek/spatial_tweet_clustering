@@ -10,7 +10,7 @@
 #include "libstemmer.h"
 
 const char * progname;
-static int pretty = 1;
+static int pretty = 0;
 
 static void
 stem_file(struct sb_stemmer * stemmer, FILE * f_in, FILE * f_out)
