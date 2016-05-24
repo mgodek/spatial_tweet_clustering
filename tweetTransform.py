@@ -1,6 +1,7 @@
 from rpy2.robjects.packages import importr, data
 import numpy
 
+from pprint import pprint
 import simplejson
 import json
 import os
@@ -13,16 +14,16 @@ class TweetsCoordinates:
     def __init__(self, isValid=False, obj=''):
         self.isValid = isValid
         if isValid == True:
-		if 'coordinates' in obj and \
-		    len(obj['coordinates']) == 2 and \
-		        'type' in obj and obj['type'] == 'Point':
-		    self.longitude = obj['coordinates'][0]
-		    self.latitude = obj['coordinates'][1]
-		else:
-		    self.isValid = False
-		    print ('TweetsCoordinates fail: coordinates are wrong')
-		    #print (obj)
-		    #raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
+            if 'coordinates' in obj : # and len(obj['coordinates']) >= 2 :
+                coor = obj['coordinates']
+                #print( coor[0] )
+		self.longitude = coor[0][0]
+		self.latitude = coor[0][1]
+            else:
+		self.isValid = False
+		print ('TweetsCoordinates fail: coordinates are wrong')
+		#print (obj)
+		#raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
     
     def get_stemmed(self):
         return format('{0}{1}{2}', self.COORDS_STEM_PREFIX, round(longitude), round(latitude))
@@ -54,11 +55,11 @@ def place_decoder(obj):
         return TweetsPlace()
 
     if 'country' and 'full_name' and 'place_type' and 'bounding_box' in obj_iterator:
-	    return TweetsPlace(True, obj['country'], obj['full_name'], obj['place_type'],
-		               TweetsCoordinates(True, obj['bounding_box']))
+        return TweetsPlace(True, obj['country'], obj['full_name'], obj['place_type'],
+		           TweetsCoordinates(True, obj['bounding_box']))
     else:
         print ('place_decoder fail: missing country, full_name, place_type or bounding_box')
-        print (obj)
+        #print (obj)
         return TweetsPlace()
 
 ###############################################################################
@@ -73,12 +74,12 @@ class TweetForClustering:
         self.tweetId = tweetId
         self.text = text # utf-8 text
         if isValid == True:
-		try:
-		    obj_iterator = iter(placeObj)
-		    self.place = place_decoder(placeObj)
-		except TypeError, te:
-		    print( 'TweetForClustering: placeObj is not iterable %s' % placeObj )
-		    self.isValid = False
+	    try:
+	        obj_iterator = iter(placeObj)
+	        self.place = place_decoder(placeObj)
+	    except TypeError, te:
+		print( 'TweetForClustering: placeObj is not iterable', placeObj )
+		self.isValid = False
 
 ###############################################################################
 
@@ -107,17 +108,23 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
             f = open(fullFileName, 'r')
             # TODO how to open the file?
             # option 1
-            allLines = f.read()
-            tweet = json.loads(allLines, object_hook=tweet_decoder)
+            #allLines = f.read()
+            #tweet = json.loads(allLines, object_hook=tweet_decoder)
             # option 2
-            #json.load(f, object_hook=tweet_decoder)
+            try:
+                tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
+            except ValueError, ve:
+                print( "Decoding error ",  json.dumps(f.read()) )
+                continue
 
 	    if tweet.isValid == False:
                 print("Invalid object file: %s" % file)
                 try:
-                    print json.dumps(allLines, indent=4, sort_keys=False)
+                    #print json.dumps(allLines, indent=4, sort_keys=False)
+                    print json.dump(tweet, indent=4, sort_keys=False)
                 except TypeError, te:
-                    print( allLines )
+                    #print( allLines )
+		    print( json.load(f) )
                 continue
 
             outfile = open(fullFileName+"stem", 'w')
