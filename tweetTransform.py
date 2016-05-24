@@ -1,6 +1,7 @@
 from rpy2.robjects.packages import importr, data
 import numpy
 
+import shutil
 from pprint import pprint
 import simplejson
 import json
@@ -102,10 +103,15 @@ def tweet_decoder(obj):
 
 def stemData(pathToRawTweets, pathToStemmedTweets):
     print( "Stem data in all files" )
+    shutil.rmtree( "tweetsTemp" )
+    os.mkdir("tweetsTemp")
+        
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
+            print("Filtering object file: %s" % file)
             fullFileName = os.path.join(root, file)
             f = open(fullFileName, 'r')
+            
             # TODO how to open the file?
             # option 1
             #allLines = f.read()
@@ -114,7 +120,7 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
             try:
                 tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
             except ValueError, ve:
-                print( "Decoding error ",  json.dumps(f.read()) )
+                print( "Decoding error ", json.dumps(f.read()) )
                 continue
 
 	    if tweet.isValid == False:
@@ -127,15 +133,17 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
 		    print( json.load(f) )
                 continue
 
-            outfile = open(fullFileName+"stem", 'w')
-#            tweet >> outfile TODO save object as string to file
+            print("Stemming object file: %s" % file)
+            readyForStem = fullFileName.replace( "/tweets/", "/tweetsTemp/" )
+            outfile = open(readyForStem, 'w')
+            #tweet >> outfile TODO save object as string to file
             outfile.close()
 
             # run C code for stemming
             from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
 
-            lib.stem(fullFileName+"stem", pathToStemmedTweets+file)
+            lib.stem(readyForStem, pathToStemmedTweets+file)
 
 ###############################################################################
 
