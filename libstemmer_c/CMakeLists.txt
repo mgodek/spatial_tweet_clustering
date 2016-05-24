@@ -4,8 +4,8 @@ project(snowballStemmer)
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -fpic -O3" )
 
 # choose which version You want
-include( mkinc.cmake )
-#include( mkinc_utf8.cmake )
+#include( mkinc.cmake )
+include( mkinc_utf8.cmake )
 
 include_directories( 
   src_c

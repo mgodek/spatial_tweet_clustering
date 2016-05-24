@@ -131,52 +131,53 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
     shutil.rmtree( "tweetsTemp" )
     os.mkdir("tweetsTemp")
         
-    for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
-        for file in files:
-            print( '{0}\r'.format("Processing object file: %s" % file) ),
-            #print( "Processing object file: %s" % file )
-            fullFileName = os.path.join(root, file)
-            f = open(fullFileName, 'r')
-            
-            # TODO how to open the file?
-            # option 1
-            #allLines = f.read()
-            #tweet = json.loads(allLines, object_hook=tweet_decoder)
-            # option 2
-            try:
-                tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
-            except ValueError, ve:
-                print( "Decoding error ", json.dumps(f.read()) )
-                continue
+    for file in os.listdir(pathToRawTweets):
+	    print( '{0}\r'.format("Processing object file: %s" % file) ),
+	    #print( "Processing object file: %s" % file )
+	    fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file #os.path.join(root, file)
+	    f = open(fullFileName, 'r')
+	    
+	    # TODO how to open the file?
+	    # option 1
+	    #allLines = f.read()
+	    #tweet = json.loads(allLines, object_hook=tweet_decoder)
+	    # option 2
+	    try:
+		tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
+	    except ValueError, ve:
+		print( "Decoding error ", json.dumps(f.read()) )
+		continue
 
 	    if tweet.isValid == False:
-                print("Invalid object file: %s" % file)
-                try:
-                    #print json.dumps(allLines, indent=4, sort_keys=False)
-                    print json.dump(tweet, indent=4, sort_keys=False)
-                except TypeError, te:
-                    #print( allLines )
+		print("Invalid object file: %s" % file)
+		try:
+		    #print json.dumps(allLines, indent=4, sort_keys=False)
+		    print json.dump(tweet, indent=4, sort_keys=False)
+		except TypeError, te:
+		    #print( allLines )
 		    print( f.read() )
-                continue
+		    f.close()
+		continue
+	    f.close()
 
-            #print("Stemming object file: %s" % file)
-            fileForStem = fullFileName.replace( "tweets", "tweetsTemp" )
-            #print( "temp %s" % fileForStem )
-            outfile = open(fileForStem, 'w')
-            #print( " %s " % tweet.toString() )
-            exclude = set(string.punctuation)
+	    #print("Stemming object file: %s" % file)
+	    fileForStem = fullFileName.replace( "tweets", "tweetsTemp" )
+	    #print( "temp %s" % fileForStem )
+	    outfile = open(fileForStem, 'w')
+	    #print( " %s " % tweet.toString() )
+	    exclude = set(string.punctuation)
 	    tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude) # remove punctuations
-            #print( "tweetForStem: %s" % tweetForStem ) 
-            outfile.write(''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])) # discard unicode specific characters
-            #print( " %s " % tweetForStem )
-            outfile.close()
+	    #print( "tweetForStem: %s" % tweetForStem ) 
+	    outfile.write(''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])) # discard unicode specific characters
+	    #print( " %s " % tweetForStem )
+	    outfile.close()
 
-            # run C code for stemming
-            from ctypes import cdll
+	    # run C code for stemming
+	    from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
 
-            ret = lib.stem(fileForStem, pathToStemmedTweets+"/"+file)
-            #print( "stem ret ", ret )
+	    ret = lib.stem(fileForStem, pathToStemmedTweets+"/"+file)
+	    #print( "stem ret ", ret )
 
     print # go to next line
 
