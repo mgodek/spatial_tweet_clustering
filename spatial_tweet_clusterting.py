@@ -13,11 +13,12 @@ from time import gmtime, strftime
 from time import gmtime, strftime
 
 pathToRawTweets        = "tweets/"
-pathToStemmedTweets    = "tweetsStemmed/"
+pathToStemmedTweets    = "/home/zby/projects/spdb/spatial_tweet_clustering/tweetsStemmed.txt"
 tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
 tweetsFeatureListFile  = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
 clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
+logFile                = "log.txt"
 
 def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
@@ -117,7 +118,7 @@ def transformTweetDataMenu():
     print ( "Stem raw data? Y/n" )
     choice = raw_input(" >>  ")
     if choice == 'Y':
-        stemData(pathToRawTweets, pathToStemmedTweets)
+        stemData(pathToRawTweets, pathToStemmedTweets, logFile)
 
     print ( "TFIDF stemmed data? Y/n" )
     choice = raw_input(" >>  ")

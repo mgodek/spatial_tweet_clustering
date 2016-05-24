@@ -1,10 +1,12 @@
 from rpy2.robjects.packages import importr, data
+import ctypes
 import numpy
 
 import simplejson
 import json
 import os
 import sys
+import logging
 
 ###############################################################################
 
@@ -19,12 +21,13 @@ class TweetsCoordinates:
             self.latitude = obj['coordinates'][1]
         else:
             self.isValid = False
-            print ('TweetsCoordinates fail')
+            logging.debug('TweetsCoordinates fail')
             #print (obj)
             #raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
     
     def get_stemmed(self):
-        return format('{0}{1}{2}', self.COORDS_STEM_PREFIX, round(longitude), round(latitude))
+        return [format('{0}_{1}', self.COORDS_STEM_PREFIX, round(longitude)),\
+            format('{0}_{1}', self.COORDS_STEM_PREFIX, round(latitude))]
 
 ###############################################################################
 
@@ -43,14 +46,22 @@ class TweetsPlace:
         if coordinates.isValid == False:
             self.isValid = False
         self.coordinates = coordinates
+        
+    def get_stemmed(self, stemFunc, stemmer):
+        return [str(stemFunc(stemmer, self.country, len(self.country))), \
+            str(stemFunc(stemmer, self.full_name, len(self.full_name))), \
+                str(stemFunc(stemmer, self.name, len(name))), \
+                    str(stemFunc(stemmer, self.place_type, len(self.place_type)))]
 
 ###############################################################################
         
 def place_decoder(obj):
     try:
-        obj_iterator = iter(obj)
+        if not isinstance(obj, dict):
+            raise TypeError
     except TypeError, te:
-        print( obj, 'place_decoder is not iterable' )
+        logging.debug( 'argument obj passed to place_decoder is not dict: %s' % str(obj))
+        logging.debug('arguemnt type is %s instead' % type(obj))
         return TweetsPlace()
 
     if 'country' and 'full_name' and 'name' and 'place_type' and 'coordinates' in obj_iterator:
@@ -58,8 +69,8 @@ def place_decoder(obj):
 		               obj['name'], obj['place_type'],
 		               TweetsCoordinates(True, obj['coordinates']))
     else:
-        print ('place_decoder fail')
-        print (obj)
+        logging.debug ('place_decoder fail')
+        logging.debug (obj)
         return TweetsPlace()
 
 ###############################################################################
@@ -76,53 +87,94 @@ class TweetForClustering:
         self.lang = lang # language code
         self.text = text # utf-8 text
         try:
-            obj_iterator = iter(placeObj)
+            if not isinstance(placeObj, dict):
+                raise TypeError
             self.place = place_decoder(placeObj['place'])
         except TypeError, te:
-            print( placeObj, 'TweetForClustering is not iterable' )
+            logging.debug('Argument passed to TweetForClustering is not dict: %s' % str(placeObj))
+            logging.debug('arguemnt type is %s instead' % type(placeObj))
             self.isValid = False
+            
+    def get_stemmed(self, stemFunc, stemmer):
+        results = self.place.get_stemmed(stemFunc, stemmer)
+        results = results + self.coordinates.get_stemmed()
+        for word in self.text.split(" "):
+            results.append(str(stemFunc(stemmer, word, len(word))))
+            
+    
 
 ###############################################################################
 
 def tweet_decoder(obj):
     try:
-        obj_iterator = iter(obj)
+        if not isinstance(obj, dict):
+            raise TypeError
     except TypeError, te:
-        print( obj, 'tweet_decoder is not iterable' )
-        return TweetForClustering()
+        logging.debug(str(obj)
+        logging.debug('argument obj passed to tweet_decoder is not dict' )
+        log('arguemnt type is %s instead' % type(obj))
+        logging.debug TweetForClustering()
    
-    if 'id_str' and 'lang' and 'text' and 'place' in obj_iterator:
+    if 'id_str' and 'lang' and 'text' and 'place' in obj:
         tweet = TweetForClustering(True, obj['id_str'], obj['lang'], obj['text'], obj)
         return tweet
     else:
-        print ('tweet_decoder fail')
+        logging.debug ('tweet_decoder fail')
         #print (obj) #json.dumps(obj, indent=4, sort_keys=False)
         return TweetForClustering()
 
 ###############################################################################
 
-def stemData(pathToRawTweets, pathToStemmedTweets):
-    print( "Stem data in all files" )
+def storeStemmedData(path, stemmedData):
+    f = open(path, 'w')
+    for elem in stemmedData:
+        f.write(format("{0}: ", elem['id']))
+        for stem in elem['data']:
+            f.write(format("{0}, ", stem))
+        f.write("\n")
+    f.close()
+    logging.debug( "Storing done" )
+
+###############################################################################
+
+def stemData(pathToRawTweets, pathToStemmedTweets, logFile):
+    results = []
+    logging.basicConfig(filename='stemming.log', level=logging.DEBUG)
+    logging.debug( "Stem data in all files" )
+    logging.debug( "Creating stemmer" )
+    # C code to get stemming related functions, and assign proper return types 
+    lib = ctypes.cdll.LoadLibrary('/home/zby/projects/spdb/spatial_tweet_clustering/libstemmer_c/libstemmer.so')
+    createStemmer = lib.sb_stemmer_new
+    createStemmer.restype = ctypes.c_void_p
+    deleteStemmer = lib.sb_stemmer_delete
+    doStemming = lib.sb_stemmer_stem
+    doStemming.restype = ctypes.c_char_p
+    stemmer_p = createStemmer("en", "UTF_8")
+    logging.debug( "Crawling and stemming files" )
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
             fullFileName = os.path.join(root, file)
             f = open(fullFileName, 'r')
-            allLines = f.read()#.replace('\n', ' ') # TODO
-            tweet = json.loads(allLines, object_hook=tweet_decoder)
+            for line in f:
+                tweet = json.loads(line, object_hook=tweet_decoder)
 
 	    if tweet.isValid == False:
-                print("Invalid object file: %s" % file)
+                logging.debug("Invalid object file: %s" % file)
                 try:
-                    print json.dumps(allLines, indent=4, sort_keys=False)
+                    logging.debug json.dumps(line, indent=4, sort_keys=False)
                 except TypeError, te:
-                    print( allLines )
+                    logging.debug( line )
                 continue
-
-            # run C code for stemming
-            from ctypes import cdll
-	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
+            stemmedData = tweet.get_stemmed(doStemming, stemmer_p)
+            results.append({'id' : tweet.id, 'data': stemmedData})
+	    
             #TODO put tweet to stem instead of what is under fullFileName
+            
             lib.stem(fullFileName, pathToStemmedTweets+file)
+            f.close()
+    deleteStemmer(stemmer_p)
+    logging.debug ( "removed stemmer, storing stuff to %s" %pathToStemmedTweets)
+    storeStemmedData(pathToStemmedTweets, results)
 
 ###############################################################################
 
@@ -134,7 +186,7 @@ def tfidfData(pathToStemmedTweets):
 
 	    # run C code for tfidf
 	    from ctypes import cdll
-	    lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
+	    lib = ctypes.LoadLibrary('./cmake_tfidf/libtfidf.so')
 
 	    class TFIDF(object):
 		def __init__(self):
