@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import shutil
 import sys, os, signal, time
 import tweetFetcher
 import clusterModule
@@ -12,8 +13,8 @@ from time import gmtime, strftime
 
 from time import gmtime, strftime
 
-pathToRawTweets        = "tweets/"
-pathToStemmedTweets    = "tweetsStemmed/"
+pathToRawTweets        = "tweets"
+pathToStemmedTweets    = "tweetsStemmed"
 tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
 tweetsFeatureListFile  = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
 clusterNaiveResultFile = "claraOutputNaive.txt"
@@ -117,6 +118,11 @@ def transformTweetDataMenu():
     print ( "Stem raw data? Y/n" )
     choice = raw_input(" >>  ")
     if choice == 'Y':
+        try:
+            shutil.rmtree( pathToStemmedTweets )
+        except OSError:
+            print( "Reset %s" % pathToStemmedTweets )
+        os.mkdir(pathToStemmedTweets)
         stemData(pathToRawTweets, pathToStemmedTweets)
 
     print ( "TFIDF stemmed data? Y/n" )

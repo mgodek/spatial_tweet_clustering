@@ -1,6 +1,7 @@
 from rpy2.robjects.packages import importr, data
 import numpy
 
+import re, string, timeit
 import shutil
 from pprint import pprint
 import simplejson
@@ -11,23 +12,26 @@ import sys
 ###############################################################################
 
 class TweetsCoordinates:
-    COORDS_STEM_PREFIX = "COORDS"
+    #COORDS_STEM_PREFIX = "COORDS"
     def __init__(self, isValid=False, obj=''):
         self.isValid = isValid
         if isValid == True:
             if 'coordinates' in obj : # and len(obj['coordinates']) >= 2 :
                 coor = obj['coordinates']
                 #print( coor[0] )
-		self.longitude = coor[0][0]
-		self.latitude = coor[0][1]
+		self.longitude = coor[0][0][0]
+		self.latitude = coor[0][0][1]
             else:
 		self.isValid = False
 		print ('TweetsCoordinates fail: coordinates are wrong')
 		#print (obj)
 		#raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
     
-    def get_stemmed(self):
-        return format('{0}{1}{2}', self.COORDS_STEM_PREFIX, round(longitude), round(latitude))
+    def toString(self):
+        summary  = str(round(self.longitude))
+        summary += " "
+        summary += str(round(self.latitude))
+        return summary
 
 ###############################################################################
 
@@ -45,6 +49,17 @@ class TweetsPlace:
         if coordinates.isValid == False:
             self.isValid = False
         self.coordinates = coordinates
+
+    def toString(self):
+        summary  = self.country
+        summary += " "
+        summary += self.full_name
+        summary += " "
+        summary += self.place_type
+        summary += " "
+        #print( "type ", type(self.coordinates.longitude), self.coordinates.longitude )
+        summary += self.coordinates.toString()
+        return summary
 
 ###############################################################################
         
@@ -82,6 +97,16 @@ class TweetForClustering:
 		print( 'TweetForClustering: placeObj is not iterable', placeObj )
 		self.isValid = False
 
+    def dump(obj):
+        for attr in dir(obj):
+            print "obj.%s = %s" % (attr, getattr(obj, attr))
+
+    def toString(self):
+        summary  = self.text
+        summary += " "
+        summary += self.place.toString()
+        return summary
+
 ###############################################################################
 
 def tweet_decoder(obj):
@@ -108,7 +133,8 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
         
     for root, dirs, files in os.walk(pathToRawTweets, topdown=False):
         for file in files:
-            print("Filtering object file: %s" % file)
+            print( '{0}\r'.format("Processing object file: %s" % file) ),
+            #print( "Processing object file: %s" % file )
             fullFileName = os.path.join(root, file)
             f = open(fullFileName, 'r')
             
@@ -130,20 +156,29 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
                     print json.dump(tweet, indent=4, sort_keys=False)
                 except TypeError, te:
                     #print( allLines )
-		    print( json.load(f) )
+		    print( f.read() )
                 continue
 
-            print("Stemming object file: %s" % file)
-            readyForStem = fullFileName.replace( "/tweets/", "/tweetsTemp/" )
-            outfile = open(readyForStem, 'w')
-            #tweet >> outfile TODO save object as string to file
+            #print("Stemming object file: %s" % file)
+            fileForStem = fullFileName.replace( "tweets", "tweetsTemp" )
+            #print( "temp %s" % fileForStem )
+            outfile = open(fileForStem, 'w')
+            #print( " %s " % tweet.toString() )
+            exclude = set(string.punctuation)
+	    tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude) # remove punctuations
+            #print( "tweetForStem: %s" % tweetForStem ) 
+            outfile.write(''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])) # discard unicode specific characters
+            #print( " %s " % tweetForStem )
             outfile.close()
 
             # run C code for stemming
             from ctypes import cdll
 	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
 
-            lib.stem(readyForStem, pathToStemmedTweets+file)
+            ret = lib.stem(fileForStem, pathToStemmedTweets+"/"+file)
+            #print( "stem ret ", ret )
+
+    print # go to next line
 
 ###############################################################################
 
