@@ -9,6 +9,8 @@ import simplejson
 import json
 import os
 import sys
+from datetime import datetime
+
 
 ###############################################################################
 
@@ -59,11 +61,9 @@ class TweetsPlace:
         self.coordinates = coordinates
         #print self.country
          
-    def get_stemmed(self, stemFunc, stemmer):
+    def get_stemmed(self, words):
         if self.isValid:
-            return [str(stemFunc(stemmer, self.country, len(self.country))), \
-                str(stemFunc(stemmer, self.full_name, len(self.full_name))), \
-                    str(stemFunc(stemmer, self.place_type, len(self.place_type)))] + self.coordinates.get_stemmed()
+            return [words[self.country], words[self.full_name], words[self.place_type]] + self.coordinates.get_stemmed()
         else:
             return []
     
@@ -116,10 +116,10 @@ class TweetForClustering:
                 print('arguemnt type is %s instead' % type(placeObj))
                 self.isValid = Falseself.isValid = False
      
-    def get_stemmed(self, stemFunc, stemmer):
-        results = self.place.get_stemmed(stemFunc, stemmer)
-        for word in self.text.split(" "):
-            results.append(str(stemFunc(stemmer, word, len(word))))
+    def get_stemmed(self, words):
+        results = self.place.get_stemmed(words)
+        for word in self.text.split():
+            results.append(words[word])
         return results
     
     def dump(obj):
@@ -159,45 +159,50 @@ class StemmingResult:
         self.tweetId = tweetId
         self.listOfStems = data
 
-def storeStemmedData(path, stemmedData):
+def storeStemmedData(path, stemmedData, logs):
     try:
         with open(path, 'w') as stemmedFile:
             if stemmedData == None or len(stemmedData) == 0:
-                print('Empty results while storing')
-                raise ValueError
+                logs.write('Empty results while storing\n')
             for elem in stemmedData:
                 stemmedFile.write(str(elem.tweetId))
                 stemmedFile.write(':')
                 if elem.listOfStems == None or len(elem.listOfStems) == 0:
-                    print('Empty data for tweet')
+                    logs.write('Empty data for tweet\n')
                     continue
                 for stem in elem.listOfStems:
                     stemmedFile.write(stem)
                     stemmedFile.write(',')
                 stemmedFile.write("\n")
             stemmedFile.flush()
-        print( "Storing done" )
+        logs.write( "Storing done\n" )
     except IOError as e:
-        print "Storing Stems Failure: I/O error({0}): {1}".format(e.errno, e.strerror)
+        logs.write("Storing Stems Failure: I/O error({0}): {1}\n".format(e.errno, e.strerror))
 
 ###############################################################################
 
-def stemData(pathToRawTweets, pathToStemmedTweets):
-    results = []
-    #logging.basicConfig(filename='stemming.log', level=print)
-    print( "Stem data in all files" )
-    print( "Creating stemmer" )
-    lib = ctypes.cdll.LoadLibrary('/home/zby/projects/spdb/spatial_tweet_clustering/libstemmer_c/libstemmer.so')
-    createStemmer = lib.sb_stemmer_new
-    createStemmer.restype = ctypes.c_void_p
-    deleteStemmer = lib.sb_stemmer_delete
-    doStemming = lib.sb_stemmer_stem
-    doStemming.restype = ctypes.c_char_p
-    stemmer_p = createStemmer("en", "UTF_8")
-    print( "Crawling and stemming files" )
-    logs = open('stemming.log', 'w')
+class PreparationResult:
+    def __init__(self, words={}, tweets=[]):
+        self.tweets = tweets
+        self.words = words
+
+def writeWordsFromTextToFile(text, outfile, words):
+    for w in text.split():
+        if w not in words:
+            words[w] = ''
+            outfile.write("%s\n"%w)
+        
+
+def prepareDataForStemming(pathToRawTweets, pathToPreStemmedTweets):
+    print( "storing words from tweets" )
+    logs = open('stemming.log', 'a')
+    logs.write("%s @ prepareDataForStemming METHOD"%datetime.now().strftime('%Y%m%d_%H:%M:%S - '))
     validTweets = 0
     invalidTweets = 0
+    preStemming = open(pathToPreStemmedTweets, 'w')
+    tweets = []
+    words = {}
+    logs.write("readgin tweets from %s\n"%pathToRawTweets)
     for file in os.listdir(pathToRawTweets):
         fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file #os.path.join(root, file)
         f = open(fullFileName, 'r')
@@ -214,18 +219,60 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
             continue
         else:
             validTweets += 1
-            stemmedData = tweet.get_stemmed(doStemming, stemmer_p)
-            logs.write("stemmed data len is %d"% len(stemmedData))
-            results.append(StemmingResult(tweet.tweetId, stemmedData))
+            tweets.append(tweet)
         f.close()
         logs.flush()
-    logs.write("\n\n VALID: %d"% validTweets)
-    logs.write("\n\n INVALID: %d"% invalidTweets)
-    print("Storing stuff to %s" %pathToStemmedTweets)
-    storeStemmedData(pathToStemmedTweets, results)
-    print('Deleting stemmer')
-    deleteStemmer(stemmer_p)
-    print('Removed stemmer')
+    logs.write("writing words to stem to %s file\n"%pathToPreStemmedTweets)
+    logs.write("\n\n VALID: %d\n"% validTweets)
+    logs.write("\n\n INVALID: %d\n"% invalidTweets)
+    for t in tweets:
+        writeWordsFromTextToFile(t.text, preStemming, words)
+        writeWordsFromTextToFile(t.place.country, preStemming, words)
+        writeWordsFromTextToFile(t.place.full_name, preStemming, words)
+        writeWordsFromTextToFile(t.place.place_type, preStemming, words)
+    preStemming.flush()
+    logs.close()
+    preStemming.close()
+    return PreparationResult(words, tweets)
+
+##############################################################################################
+
+def stemData(pathToPreparedStemms, pathToStemmedTweets, prepResults):
+    results = []
+    #logging.basicConfig(filename='stemming.log', level=print)
+    print( "Stem data in all files" )
+    
+    logs = open('stemming.log', 'a')
+    logs.write("%s @ stemData METHOD\n"%datetime.now().strftime('%Y%m%d_%H:%M:%S - '))
+    stems = open(pathToPreparedStemms, 'r')
+    logs.write("reading stems from %s file\n"%pathToPreparedStemms)
+    for line in stems:
+        items = line.split()
+        if len(items) == 1:
+            prepResults.words[items[0]] = items[0]
+            continue
+        if len(items) != 2:
+            logs.write("Error while reading stems: %s\n"% line)
+            continue
+        prepResults.words[items[0]] = items[1]
+    logs.write("reading stems done\n")
+    logs.write("stemming from dict\n")
+    logs.flush()
+    try:
+        logs.write("There is %d tweets"%len(prepResults.tweets))
+        for t in prepResults.tweets:
+            if t.isValid == True:
+                logs.write("stemming tweet %s\n"%t.tweetId)
+                stemmedData = t.get_stemmed(prepResults.words)
+                logs.write("stemmed tweet resulted in %d words"%len(stemmedData))
+                results.append(StemmingResult(t.tweetId, stemmedData))
+    except:
+        logs.write("some exception\n")
+    logs.write("all stemmed\n")
+    logs.write("Storing stuff to %s\n" %pathToStemmedTweets)
+    logs.flush()
+    storeStemmedData(pathToStemmedTweets, results, logs)
+    logs.write("returning from storing stemmed\n")
     logs.close()
     #logging.flush()
 
@@ -309,3 +356,15 @@ def tfidfData(pathToStemmedTweets):
 def makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile):
     print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature, featureListing: each row is a word-feature mapping to column features in matrixEntries -> tweetsFeatureListFile) of all files" ) #TODO
     return 
+
+    #print( "Creating stemmer" )
+    #lib = ctypes.cdll.LoadLibrary('/home/zby/projects/spdb/spatial_tweet_clustering/libstemmer_c/libstemmer.so')
+    #createStemmer = lib.sb_stemmer_new
+    #createStemmer.restype = ctypes.c_void_p
+    #createStemmer.argtpyes = [ctypes.c_char_p, ctypes.c_char_p]
+    #deleteStemmer = lib.sb_stemmer_delete
+    #deleteStemmer.argtypes = [ctypes.c_void_p]
+    #doStemming = lib.sb_stemmer_stem
+    #doStemming.argtpyes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+    #doStemming.restype = ctypes.c_char_p
+    #stemmer_p = createStemmer("en", "UTF_8")

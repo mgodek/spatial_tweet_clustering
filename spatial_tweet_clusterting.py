@@ -7,7 +7,7 @@ import clusterModule
 import tweetTransform
 
 import numpy as np
-from tweetTransform import stemData, tfidfData, makeMatrixFiles
+from tweetTransform import prepareDataForStemming, stemData, tfidfData, makeMatrixFiles
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 
@@ -19,6 +19,10 @@ tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row bei
 tweetsFeatureListFile  = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
 clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
+pathToPreStemmedTweets = "preStemmed.txt"
+pathToPreparedStemms   = "preparedStemms.txt"
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 def signal_handler(signal, frame):
     print('You pressed Ctrl+C!')
@@ -115,10 +119,17 @@ def fetchTweetsPeriodicallyMenu():
 def transformTweetDataMenu():
     print ( "Transforming raw json tweets to R input" )
 
+    print ( "Prepare raw data for stemming? Y/n" )
+    choice = raw_input(" >>  ")
+    prepResults = None
+    if choice == 'Y':
+        prepResults = prepareDataForStemming(pathToRawTweets, pathToPreStemmedTweets)
+    print ("Please run ./stemwords program on %s file as input and %s as output, using -p2 option"%(pathToPreStemmedTweets, pathToPreparedStemms))
+    print ("After it's done %s file will be used as input to the next step"%pathToPreparedStemms)
     print ( "Stem raw data? Y/n" )
     choice = raw_input(" >>  ")
     if choice == 'Y':
-        stemData(pathToRawTweets, pathToStemmedTweets)
+        stemData(pathToPreparedStemms, pathToStemmedTweets, prepResults)
 
     print ( "TFIDF stemmed data? Y/n" )
     choice = raw_input(" >>  ")
