@@ -13,7 +13,7 @@ public:
 
     virtual ~StemmedFileInMemoryParser();
 
-    bool loadData(const char* fileName, bool skipFirstWordPerLine=false);
+    bool loadData(const char* fileName);
 
     void countTfidf();
 
@@ -43,5 +43,19 @@ protected:
     static double MinimalValueLowerBound;
 
 };
+
+extern "C" {
+    StemmedFileInMemoryParser* TFIDF_New()
+    {
+	return new StemmedFileInMemoryParser();
+    }
+
+    void TFIDF_Run( StemmedFileInMemoryParser* parser, const char* fileName )
+    {
+	parser->loadData(fileName);
+	parser->countTfidf();
+	parser->storeTfidfInFile(fileName);
+    }
+}
 
 #endif // STEMMEDFILEINMEMORYPARSER_H

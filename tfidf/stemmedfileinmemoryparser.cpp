@@ -35,13 +35,12 @@ StemmedFileInMemoryParser::~StemmedFileInMemoryParser()
     }
 }
 
-bool StemmedFileInMemoryParser::loadData(const char* fileName, bool skipFirstWordPerLine)
+bool StemmedFileInMemoryParser::loadData(const char* fileName)
 {
     std::ifstream in(fileName, std::ios::in);
     if(!in.is_open())
         return false;
     unsigned docNumber = 0;
-    bool first = false;
     while(!in.eof())
     {
         std::string line;
@@ -52,14 +51,8 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName, bool skipFirstWor
         unsigned int lineLen = 0;
         std::unordered_map<size_t, unsigned int>* doc = new std::unordered_map<size_t, unsigned int>();
         std::unordered_map<size_t, bool> alreadyInserted;
-	first = true;
-        while(!inner.eof()) // iterating over line
+        while(!inner.eof())
         {
-	    if(skipFirstWordPerLine && first) 
-	    {
-	      first = false;
-	      continue;
-	    }
             std::string word;
             inner >> word;
             ++lineLen;
