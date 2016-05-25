@@ -1,0 +1,2 @@
+/home/zby/projects/spdb/spatial_tweet_clustering/tfidf/build/CMakeFiles/tfidf_make.dir
+/home/zby/projects/spdb/spatial_tweet_clustering/tfidf/build/CMakeFiles/tfidf.dir

@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zby/projects/spdb/spatial_tweet_clustering/tfidf/stemmedfileinmemoryparser.cpp
+stemmedfileinmemoryparser.h
+/home/zby/projects/spdb/spatial_tweet_clustering/tfidf/stemmedfileinmemoryparser.h
+cmath
+-
+cfloat
+-
+fstream
+-
+functional
+-
+iostream
+-
+string
+-
+sstream
+-
+
+/home/zby/projects/spdb/spatial_tweet_clustering/tfidf/stemmedfileinmemoryparser.h
+string
+-
+functional
+-
+list
+-
+unordered_map
+-
+

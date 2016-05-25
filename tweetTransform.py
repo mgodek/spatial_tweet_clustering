@@ -176,13 +176,13 @@ def storeStemmedData(path, stemmedData, logs):
                 logs.write('Empty results while storing\n')
             for elem in stemmedData:
                 stemmedFile.write(str(elem.tweetId))
-                stemmedFile.write(':')
+                stemmedFile.write(' ')
                 if elem.listOfStems == None or len(elem.listOfStems) == 0:
                     logs.write('Empty data for tweet\n')
                     continue
                 for stem in elem.listOfStems:
                     stemmedFile.write(stem)
-                    stemmedFile.write(',')
+                    stemmedFile.write(' ')
                 stemmedFile.write("\n")
             stemmedFile.flush()
         logs.write( "Storing done\n" )

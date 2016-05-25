@@ -1,0 +1,1 @@
+/usr/bin/c++    -Wall -Werror -std=c++11 -fpic -O3 -g   CMakeFiles/tfidf_make.dir/main.cpp.o  -o tfidf_make -rdynamic libtfidf.so -Wl,-rpath,/home/zby/projects/spdb/spatial_tweet_clustering/tfidf/build 
