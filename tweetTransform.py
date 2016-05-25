@@ -45,6 +45,15 @@ class TweetsCoordinates:
 
 ###############################################################################
 
+def getStemmedWords(text, words):
+    res = []
+    for w in text.split():
+        if w in words:
+            res.append(words[w])
+    return res
+
+###############################################################################
+
 class TweetsPlace:
     """ Place related to the tweet. It doesn't have to be a place of tweet origin.
     The tweet may simply refer to some place.
@@ -63,7 +72,7 @@ class TweetsPlace:
          
     def get_stemmed(self, words):
         if self.isValid:
-            return [words[self.country], words[self.full_name], words[self.place_type]] + self.coordinates.get_stemmed()
+            return getStemmedWords(self.country, words) + getStemmedWords(self.full_name, words) + getStemmedWords(self.place_type, words) + self.coordinates.get_stemmed()
         else:
             return []
     
@@ -77,6 +86,7 @@ class TweetsPlace:
         #print( "type ", type(self.coordinates.longitude), self.coordinates.longitude )
         summary += self.coordinates.toString()
         return summary
+        
 
 ###############################################################################
         
@@ -258,16 +268,20 @@ def stemData(pathToPreparedStemms, pathToStemmedTweets, prepResults):
     logs.write("reading stems done\n")
     logs.write("stemming from dict\n")
     logs.flush()
-    try:
-        logs.write("There is %d tweets"%len(prepResults.tweets))
-        for t in prepResults.tweets:
+    logs.write("There is %d tweets\n"%len(prepResults.tweets))
+    for t in prepResults.tweets:
+        try:
             if t.isValid == True:
                 logs.write("stemming tweet %s\n"%t.tweetId)
                 stemmedData = t.get_stemmed(prepResults.words)
                 logs.write("stemmed tweet resulted in %d words"%len(stemmedData))
                 results.append(StemmingResult(t.tweetId, stemmedData))
-    except:
-        logs.write("some exception\n")
+        except Exception as ex:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print message
+            logs.write(message)
+            logs.write('\n')
     logs.write("all stemmed\n")
     logs.write("Storing stuff to %s\n" %pathToStemmedTweets)
     logs.flush()
