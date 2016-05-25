@@ -21,9 +21,9 @@ clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
 
 def signal_handler(signal, frame):
-	print('You pressed Ctrl+C!')
-	#sys.exit(0)
-	main_menu()
+    print('You pressed Ctrl+C!')
+    #sys.exit(0)
+    main_menu()
 
 def main_menu():
     os.system('clear')
@@ -64,7 +64,7 @@ def setup():
     if os.getuid() == 0:
         setupCluster()
     else:
-	print ("This program is not run as sudo so this function will not work")
+        print ("This program is not run as sudo so this function will not work")
 
     print ("9. Back")
     print ("0. Quit")
@@ -101,7 +101,7 @@ def fetchTweetsPeriodicallyMenu():
         except KeyboardInterrupt, e:
             print( "Interrupted" )
 
-	if x + 1 < times:
+    if x + 1 < times:
             print( "Waiting ", hours, " hours for round ", x+1, " out of ", times )
             time.sleep(3600*hours)
 
@@ -118,11 +118,6 @@ def transformTweetDataMenu():
     print ( "Stem raw data? Y/n" )
     choice = raw_input(" >>  ")
     if choice == 'Y':
-        try:
-            shutil.rmtree( pathToStemmedTweets )
-        except OSError:
-            print( "Reset %s" % pathToStemmedTweets )
-        os.mkdir(pathToStemmedTweets)
         stemData(pathToRawTweets, pathToStemmedTweets)
 
     print ( "TFIDF stemmed data? Y/n" )
