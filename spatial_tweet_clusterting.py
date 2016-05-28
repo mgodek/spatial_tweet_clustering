@@ -1,29 +1,33 @@
-from __future__ import absolute_import, print_function
 
+###############################################################################
+
+from __future__ import absolute_import, print_function
 import shutil
 import sys, os, signal, time
 import tweetFetcher
 import clusterModule
 import tweetTransform
-
 import numpy as np
-from tweetTransform import stemData, tfidfData, makeMatrixFiles
+from tweetTransform import parseData, stemData, tfidfData, makeMatrixFiles
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 
-from time import gmtime, strftime
-
 pathToRawTweets        = "tweets"
-pathToStemmedTweets    = "tweetsStemmed"
-tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
-tweetsFeatureListFile  = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
+summaryParsedTweets    = "summaryParsedTweets.txt"
+summaryStemmedTweets   = 'summaryStemmedTweets.txt'
+summaryTfidfTweets     = 'summaryTfidfTweets.txt'
+tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of weights (column position indicated feature)
 clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
 
+###############################################################################
+
 def signal_handler(signal, frame):
-	print('You pressed Ctrl+C!')
-	#sys.exit(0)
-	main_menu()
+    print('You pressed Ctrl+C!')
+    #sys.exit(0)
+    main_menu()
+
+###############################################################################
 
 def main_menu():
     os.system('clear')
@@ -42,7 +46,11 @@ def main_menu():
  
     return
 
+###############################################################################
+
 menu_actions  = {}
+
+###############################################################################
 
 def exec_menu(choice):
     os.system('clear')
@@ -56,6 +64,8 @@ def exec_menu(choice):
             print ("Wrong selection, please try again.")
             menu_actions['main_menu']()
     return
+
+###############################################################################
 
 def setup():
     print ( "Running setup" )
@@ -72,6 +82,8 @@ def setup():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def fetchTweetsMenu():
     amount = 1000
     print ("Fetching ", amount, " tweets !")
@@ -86,6 +98,8 @@ def fetchTweetsMenu():
     choice = raw_input(" >>  ")
     exec_menu(choice)
     return
+
+###############################################################################
  
 def fetchTweetsPeriodicallyMenu():
     amount = 5000
@@ -112,31 +126,46 @@ def fetchTweetsPeriodicallyMenu():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def transformTweetDataMenu():
     print ( "Transforming raw json tweets to R input" )
 
-    print ( "Stem raw data? Y/n" )
-    choice = raw_input(" >>  ")
-    if choice == 'Y':
-        try:
-            shutil.rmtree( pathToStemmedTweets )
-        except OSError:
-            print( "Reset %s" % pathToStemmedTweets )
-        os.mkdir(pathToStemmedTweets)
-        stemData(pathToRawTweets, pathToStemmedTweets)
+    global interactive
 
-    print ( "TFIDF stemmed data? Y/n" )
-    choice = raw_input(" >>  ")
-    if choice == 'Y':
-        tfidfData(pathToStemmedTweets)
+    if interactive == True:
+        print ( "Parse raw data? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+             parseData(pathToRawTweets, summaryParsedTweets)
+    else:
+        parseData(pathToRawTweets, summaryParsedTweets)
 
-    makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile)    
+    if interactive == True:
+        print ( "Stem parsed data? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            stemData(summaryParsedTweets, summaryStemmedTweets)
+    else:
+        stemData(summaryParsedTweets, summaryStemmedTweets)
+
+    if interactive == True:
+        print ( "TFIDF stemmed data? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            tfidfData(summaryStemmedTweets, summaryTfidfTweets)
+    else:
+        tfidfData(summaryStemmedTweets, summaryTfidfTweets)
+
+    makeMatrixFiles(summaryTfidfTweets, tweetsMatrixFile)    
 
     print ("9. Back")
     print ("0. Quit")
     choice = raw_input(" >>  ")
     exec_menu(choice)
     return
+
+###############################################################################
 
 def clusterTweetsNaiveMenu():
     print ("Clustering tweets with Clara - naive approach !")
@@ -151,6 +180,8 @@ def clusterTweetsNaiveMenu():
     choice = raw_input(" >>  ")
     exec_menu(choice)
     return
+
+###############################################################################
 
 def clusterTweetsLessNaiveMenu():
     print ("Clustering tweets with Clara - less naive approach !")
@@ -168,6 +199,8 @@ def clusterTweetsLessNaiveMenu():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def viewResultsMenu():
     print ("Viewing results !")
 
@@ -180,11 +213,17 @@ def viewResultsMenu():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def back():
     menu_actions['main_menu']()
 
+###############################################################################
+
 def exit():
     sys.exit()
+
+###############################################################################
  
 # Menu definition
 menu_actions = {
@@ -202,4 +241,13 @@ menu_actions = {
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
+    global interactive
+    interactive = False
+    for x in sys.argv[1:]:
+        if x == "i":
+            interactive = True
+
     main_menu()
+
+###############################################################################
+

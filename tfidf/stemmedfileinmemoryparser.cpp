@@ -51,6 +51,7 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName)
         unsigned int lineLen = 0;
         std::unordered_map<size_t, unsigned int>* doc = new std::unordered_map<size_t, unsigned int>();
         std::unordered_map<size_t, bool> alreadyInserted;
+
         while(!inner.eof())
         {
             std::string word;
@@ -124,8 +125,7 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
     std::ofstream out(fileName, std::ios::trunc | std::ios::out);
     if(!out.is_open())
         return false;
-    out << _wordsCountPerDocument.size() << " "
-        << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
+    //out << _wordsCountPerDocument.size() << " " << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
     for(auto map : this->tfIdfResults)
     { // for all docs
         for(auto pair : *map)

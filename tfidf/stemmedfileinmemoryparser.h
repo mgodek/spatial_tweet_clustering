@@ -50,11 +50,11 @@ extern "C" {
 	return new StemmedFileInMemoryParser();
     }
 
-    void TFIDF_Run( StemmedFileInMemoryParser* parser, const char* fileName )
+    void TFIDF_Run( StemmedFileInMemoryParser* parser, const char* fileNameIn, const char* fileNameOut )
     {
-	parser->loadData(fileName);
+	parser->loadData(fileNameIn);
 	parser->countTfidf();
-	parser->storeTfidfInFile(fileName);
+	parser->storeTfidfInFile(fileNameOut);
     }
 }
 

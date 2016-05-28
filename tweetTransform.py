@@ -1,6 +1,6 @@
+
 from rpy2.robjects.packages import importr, data
 import numpy
-
 import re, string, timeit
 import shutil
 from pprint import pprint
@@ -11,6 +11,14 @@ import sys
 
 ###############################################################################
 
+def removeFile(filename):
+    try:
+        os.remove(filename)
+    except OSError:
+        pass
+
+###############################################################################
+
 class TweetsCoordinates:
 
     def __init__(self, isValid=False, obj=''):
@@ -18,7 +26,7 @@ class TweetsCoordinates:
         if isValid == True:
             if 'coordinates' in obj :
                 coor = obj['coordinates']
-		self.longitude = ((int(coor[0][0][0]) + 180)/10)*10
+		self.longitude = ((int(coor[0][0][0]) + 180)/10)*10 # round up to 10s of degrees
 		self.latitude = ((int(coor[0][0][1])  + 90)/10)*10
             else:
 		self.isValid = False
@@ -27,9 +35,9 @@ class TweetsCoordinates:
 		#raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
 
     def toString(self):
-        summary  = "coordspdb"+str(self.longitude)
+        summary  = "spdbcoord"+str(self.longitude)
         summary += " "
-        summary += "coordspdb"+str(self.latitude)
+        summary += "spdbcoord"+str(self.latitude)
         return summary
 
 ###############################################################################
@@ -41,19 +49,21 @@ class TweetsPlace:
     """
     def __init__(self, isValid=False, country='', full_name='', place_type='', coordinates=TweetsCoordinates()):
         self.isValid = isValid
-        self.country = country       # country full name
-        self.full_name = full_name   # city and state
-        self.place_type = place_type # e.g. city
+        self.country = country.replace(" ", "")       # country full name
+        if self.country == "":
+            self.country = "undefined"
+        self.full_name = full_name.replace(" ", "")   # city and state
+        self.place_type = place_type.replace(" ", "") # e.g. city
         if coordinates.isValid == False:
             self.isValid = False
         self.coordinates = coordinates
 
     def toString(self):
-        summary  = "countryspdb"+self.country
+        summary  = "spdbcountryname"+self.country
         summary += " "
-        summary += "placenamespdb"+self.full_name
+        summary += "spdbplacename"+self.full_name
         summary += " "
-        summary += "placetypespdb"+self.place_type
+        summary += "spdbplacetype"+self.place_type
         summary += " "
         #print( "type ", type(self.coordinates.longitude), self.coordinates.longitude )
         summary += self.coordinates.toString()
@@ -61,11 +71,11 @@ class TweetsPlace:
 
 ###############################################################################
         
-def place_decoder(obj):
+def placeDecoder(obj):
     try:
         obj_iterator = iter(obj)
     except TypeError, te:
-        print( obj, 'place_decoder is not iterable' )
+        print( obj, 'placeDecoder is not iterable' )
         return TweetsPlace()
 
     if 'country' and 'full_name' and 'place_type' and 'bounding_box' in obj_iterator:
@@ -86,11 +96,11 @@ class TweetForClustering:
     def __init__(self, isValid=False, tweetId=0, text='', placeObj=''):
         self.isValid = isValid
         self.tweetId = tweetId
-        self.text = text # utf-8 text
+        self.text    = ''.join(text.split()) # utf-8 text, remove all new line, tab chars
         if isValid == True:
 	    try:
 	        obj_iterator = iter(placeObj)
-	        self.place = place_decoder(placeObj)
+	        self.place = placeDecoder(placeObj)
 	    except TypeError, te:
 		print( 'TweetForClustering: placeObj is not iterable', placeObj )
 		self.isValid = False
@@ -107,7 +117,7 @@ class TweetForClustering:
 
 ###############################################################################
 
-def tweet_decoder(obj):
+def tweetDecoder(obj):
     try:
         obj_iterator = iter(obj)
     except TypeError, te:
@@ -124,84 +134,94 @@ def tweet_decoder(obj):
 
 ###############################################################################
 
-def stemData(pathToRawTweets, pathToStemmedTweets):
-    print( "Stem data in all files" )
-    tempWorkingDir = "tweetsTemp"
-    shutil.rmtree( tempWorkingDir, True )
-    os.mkdir(tempWorkingDir)
+def parseData(pathToRawTweets, summaryParsedTweets):
+    print( "Parsing raw data..." )
         
+    removeFile(summaryParsedTweets)
+    summaryfile = open(summaryParsedTweets, 'w')
+
     for file in os.listdir(pathToRawTweets):
-	    print( '{0}\r'.format("Processing object file: %s" % file) ),
-	    #print( "Processing object file: %s" % file )
-	    fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file
-	    fIn = open(fullFileName, 'r')
+        print( '{0}\r'.format("Parsing: %s" % file) ),
+	#print( "Processing object file: %s" % file )
+	fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file
+	fIn = open(fullFileName, 'r')
 
+	try:
+	    tweet = tweetDecoder(json.load(fIn))
+	except ValueError, ve:
+	    print( "Decoding error ", json.dumps(fIn.read()) )
+            fIn.close()
+            removeFile(fullFileName)
+            continue
+
+	if tweet.isValid == False:
+	    print("Invalid object file: %s" % file)
 	    try:
-		tweet = tweet_decoder(json.load(fIn))
-	    except ValueError, ve:
-		print( "Decoding error ", json.dumps(fIn.read()) )
-		continue
+	        print json.dump(tweet, indent=4, sort_keys=False)
+	    except TypeError, te:
+	        print( fIn.read() )
 
-	    if tweet.isValid == False:
-		print("Invalid object file: %s" % file)
-		try:
-		    print json.dump(tweet, indent=4, sort_keys=False)
-		except TypeError, te:
-		    print( fIn.read() )
-                fIn.close()
-                os.remove(fullFileName)
-		continue
-	    fIn.close()
+            fIn.close()
+            removeFile(fullFileName)
+            continue
 
-	    #print("Stemming object file: %s" % file)
-	    fileForStem = fullFileName.replace( "tweets", "tweetsTemp" )
-	    #print( "temp %s" % fileForStem )
-	    outfile = open(fileForStem, 'w')
-	    #print( " %s " % tweet.toString() )
-	    exclude = set(string.punctuation)
-	    tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude) # remove punctuations
-	    #print( "tweetForStem: %s" % tweetForStem ) 
-            tweetForStemClean = ''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])  # discard unicode specific characters
-	    outfile.write(tweetForStemClean)
-	    #print( " %s " % tweetForStem )
-	    outfile.close()
+	fIn.close()
 
-	    # run C code for stemming
-	    from ctypes import cdll
-	    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
+	#print( " %s " % tweet.toString() )
+	exclude = set(string.punctuation)
 
-	    ret = lib.stem(fileForStem, pathToStemmedTweets+"/"+file)
-	    #print( "stem ret ", ret )
+        # remove punctuations
+	tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude)
 
-    print # go to next line
-    shutil.rmtree( tempWorkingDir, True )
+        # discard unicode specific characters
+        tweetForStemClean = ''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])
+
+        summaryfile.write(file+" "+tweetForStemClean+'\n')
+
+    # go to next line
+    print
+   
+    summaryfile.close()
 
 ###############################################################################
 
-def tfidfData(pathToStemmedTweets):
-    print( "TFIDF data in all files. Concat tweets" )
+def stemData(summaryParsedTweets, summaryStemmedTweets):
+    print( "Stemming parsed data..." )
 
-    #TODO
+    removeFile(summaryStemmedTweets)
 
-    for file in os.listdir(pathToStemmedTweets):
-        fullFileName = os.getcwd()+"/"+pathToStemmedTweets+"/"+file
+    # run C code for stemming
+    from ctypes import cdll
+    lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
 
-	# run C code for tfidf
-	from ctypes import cdll
-	lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
-    
-        class TFIDF(object):
-	    def __init__(self):
-	        self.obj = lib.TFIDF_New()
-
-	    def parse(self, fullFileName):
-	        lib.TFIDF_Run(self.obj, fullFileName)
-
-	tfidf = TFIDF()
-	tfidf.parse(fullFileName) 
+    ret = lib.stem(summaryParsedTweets, summaryStemmedTweets)
+    print( "stem success: ", ret==0 )
 
 ###############################################################################
 
-def makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile):
-    print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature, featureListing: each row is a word-feature mapping to column features in matrixEntries -> tweetsFeatureListFile) of all files" ) #TODO
-    return 
+def tfidfData(summaryStemmedTweets, summaryTfidfTweets):
+    print( "TFIDFing stemmed data..." )
+    removeFile(summaryTfidfTweets)
+
+    # run C code for tfidf
+    from ctypes import cdll
+    lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
+
+    class TFIDF(object):
+	def __init__(self):
+	    self.obj = lib.TFIDF_New()
+
+	def parse(self, fileIn, fileOut):
+	    lib.TFIDF_Run(self.obj, fileIn, fileOut)
+
+    tfidf = TFIDF()
+    tfidf.parse(summaryStemmedTweets, summaryTfidfTweets) 
+
+###############################################################################
+
+def makeMatrixFiles(summaryTfidfTweets, tweetsMatrixFile):
+    print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature" ) #TODO
+    return
+
+###############################################################################
+ 
