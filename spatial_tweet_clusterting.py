@@ -8,7 +8,7 @@ import tweetFetcher
 import clusterModule
 import tweetTransform
 import numpy as np
-from tweetTransform import parseData, stemData, tfidfData, makeMatrixFiles
+from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 
@@ -16,7 +16,7 @@ pathToRawTweets        = "tweets"
 summaryParsedTweets    = "summaryParsedTweets.txt"
 summaryStemmedTweets   = 'summaryStemmedTweets.txt'
 summaryTfidfTweets     = 'summaryTfidfTweets.txt'
-tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of weights (column position indicated feature)
+tweetsMatrixFile       = "summaryClaraTweetsMatrixFile.txt"  # matrix with each row being a set of weights (column position indicated feature)
 clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
 
@@ -157,7 +157,13 @@ def transformTweetDataMenu():
     else:
         tfidfData(summaryStemmedTweets, summaryTfidfTweets)
 
-    makeMatrixFiles(summaryTfidfTweets, tweetsMatrixFile)    
+    if interactive == True:
+        print ( "Make matrix? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
+    else:
+        makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
 
     print ("9. Back")
     print ("0. Quit")

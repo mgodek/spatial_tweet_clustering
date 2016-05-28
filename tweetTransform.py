@@ -219,8 +219,84 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets):
 
 ###############################################################################
 
-def makeMatrixFiles(summaryTfidfTweets, tweetsMatrixFile):
-    print( "TODO generate files being a matrix representation -> tweetsMatrixFile (matrixEntries: each row is a tweet, each column is a feature" ) #TODO
+def makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
+    print( "Making matrix for clustering..." ) #TODO need to use sparse matrices
+    removeFile(tweetsMatrixFile)
+    matrixfile = open(tweetsMatrixFile, 'w')
+
+    fIn = open(summaryTfidfTweets, 'r')
+    for line in fIn:
+        #skip json name
+        line = line.split(' ', 1)[1]
+
+        #split to index:value pairs
+        wordCollection = line.split(' ')
+
+        #matrixEntries: each row is a tweet, each column is a feature
+
+        #fill missing with 0
+        currentIndex = 0
+        for entry in wordCollection:
+            if entry.strip() == '':
+                continue
+            #print( "entry'%s'" % entry )
+            pair = entry.split(':')
+            index = int(pair[0])
+            value = float(pair[1])
+            matrixfile.write(str(index)+':'+str(value)+" ")
+
+        matrixfile.write('\n')
+    
+    matrixfile.close()    
+
+    return
+
+###############################################################################
+
+def makeMatrixFileExtreme(summaryTfidfTweets, tweetsMatrixFile): #extreme size. use sparse version
+    print( "Making matrix for clustering..." )
+    removeFile(tweetsMatrixFile)
+    matrixfile = open(tweetsMatrixFile, 'w')
+
+    fDict = open('summaryTfidfDictionary.txt', 'r')
+    for line in fDict:
+        pass
+    lastId = int(line.split(' : ')[0])
+    print( "lastId ", lastId )
+
+    fIn = open(summaryTfidfTweets, 'r')
+    counter = 0
+    valueArray = numpy.zeros(lastId)
+    for line in fIn:
+        print( '{0}\r'.format("Processing: %d of all tweets" % (counter) ) ),
+        counter = counter +1
+        #skip json name
+        line = line.split(' ', 1)[1]
+
+        #split to index:value pairs
+        wordCollection = line.split(' ')
+
+        #matrixEntries: each row is a tweet, each column is a feature
+
+        #fill missing with 0
+        currentIndex = 0
+        valueArray.fill(0)
+        for entry in wordCollection:
+            if entry.strip() == '':
+                continue
+            #print( "entry'%s'" % entry )
+            pair = entry.split(':')
+            index = int(pair[0])
+            value = float(pair[1])
+            valueArray[index] = value
+
+        for entry in valueArray:
+            matrixfile.write(str(value)+" ")
+        matrixfile.write('\n')
+    
+    print
+    matrixfile.close()    
+
     return
 
 ###############################################################################

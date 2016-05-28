@@ -1,6 +1,7 @@
 # clusterModule.py
 
 from __future__ import absolute_import, print_function
+import subprocess
 import rpy2
 import rpy2.robjects as robjects
 # R vector of strings
@@ -33,9 +34,17 @@ def setupCluster():
 def clusterClara(tweetsMatrixFile, k, outputFile):
     print ( "Clara with ", k, " groups" )
 
+    bashCommand1 = "wc -l summaryTfidfTweets.txt | cut -f 1 -d ' ' "
+    rows = int(subprocess.check_output(['bash','-c', bashCommand1]))
+    bashCommand2 = "wc -l summaryTfidfDictionary.txt | cut -f 1 -d ' ' "
+    columns = int(subprocess.check_output(['bash','-c', bashCommand2]))
+    print( "lines summaryTfidfTweets=%d summaryTfidfDictionary=%d" % (rows, columns) )
+
     r_execClara = robjects.r('''
+      library('Matrix')
       library(cluster)
-      function(tweetsMatrixFile, k, outputFile) {         
+      function(tweetsMatrixFile, rows, columns, k, outputFile) {
+         x <- Matrix(0, nrow = rows, ncol = columns, sparse = TRUE)     
          x <- read.table(tweetsMatrixFile)
          clarax <- clara(x, k, samples=50)
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
@@ -45,7 +54,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
      }
     ''')
     
-    r_execClara(tweetsMatrixFile,k, outputFile)
+    r_execClara(tweetsMatrixFile, rows, columns, k, outputFile)
     return
 
 def clusterResults(clusterDataFile):
