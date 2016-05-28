@@ -7,10 +7,14 @@ import rpy2.robjects as robjects
 # R vector of strings
 from rpy2.robjects.vectors import StrVector
 import rpy2.robjects.numpy2ri
+from numpy import array
+import rpy2.robjects.packages as rpackages
+
+###############################################################################
 
 packnames = ('cluster')
 
-import rpy2.robjects.packages as rpackages
+###############################################################################
 
 def setupCluster():
     if all(rpackages.isinstalled(x) for x in packnames):
@@ -31,31 +35,33 @@ def setupCluster():
             utils.install_packages(StrVector(packnames))
             print ( "installing ", packnames )
 
+###############################################################################
+
 def clusterClara(tweetsMatrixFile, k, outputFile):
     print ( "Clara with ", k, " groups" )
 
-    bashCommand1 = "wc -l summaryTfidfTweets.txt | cut -f 1 -d ' ' "
-    rows = int(subprocess.check_output(['bash','-c', bashCommand1]))
-    bashCommand2 = "wc -l summaryTfidfDictionary.txt | cut -f 1 -d ' ' "
-    columns = int(subprocess.check_output(['bash','-c', bashCommand2]))
-    print( "lines summaryTfidfTweets=%d summaryTfidfDictionary=%d" % (rows, columns) )
-
     r_execClara = robjects.r('''
-      library('Matrix')
+      library(Matrix)
       library(cluster)
-      function(tweetsMatrixFile, rows, columns, k, outputFile) {
-         x <- Matrix(0, nrow = rows, ncol = columns, sparse = TRUE)     
-         x <- read.table(tweetsMatrixFile)
-         clarax <- clara(x, k, samples=50)
+      function(tweetsMatrixFile, k, outputFile) {
+         coorMat <- read.table(tweetsMatrixFile)
+         r <- as.numeric(t(coorMat[,1]))
+         c <- as.numeric(t(coorMat[,2]))
+         v <- as.numeric(t(coorMat[,3]))
+         matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
+         #clarax <- clara(matSp[1:600,1:500], k, samples=50) TODO need to decrease the size of data
+         clarax <- clara(matSp, k, samples=50)
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
-         #all.equal(clarax[-8], clara(x, k, samples=50, pamLike = TRUE)[-8])
+         #all.equal(clarax[-8], clara(matSp, k, samples=50, pamLike = TRUE)[-8])
          plot(clarax)
 	 save(clarax,file=outputFile)
-     }
+      }
     ''')
     
-    r_execClara(tweetsMatrixFile, rows, columns, k, outputFile)
+    r_execClara(tweetsMatrixFile, k, outputFile)
     return
+
+###############################################################################
 
 def clusterResults(clusterDataFile):
     print ( "Show clustering result" )
@@ -68,3 +74,5 @@ def clusterResults(clusterDataFile):
     ''')
     r_execShowResults(clusterDataFile)
     return
+
+###############################################################################

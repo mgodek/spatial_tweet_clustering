@@ -174,10 +174,15 @@ def transformTweetDataMenu():
 ###############################################################################
 
 def clusterTweetsNaiveMenu():
-    print ("Clustering tweets with Clara - naive approach !")
+    print ("Clustering tweets with Clara - naive approach !") 
 
-    print ("How many clusters do You want to create?")
-    k = raw_input(" >>  ")
+    print ("How many clusters do You want to create? (default=7)")
+    kRead = raw_input(" >>  ")
+    k = 7
+    try:
+        k = int(kRead)
+    except ValueError:
+        k = 7
 
     clusterClara(tweetsMatrixFile, k, clusterNaiveResultFile)
 

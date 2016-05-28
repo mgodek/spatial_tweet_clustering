@@ -15,7 +15,7 @@
 double StemmedFileInMemoryParser::MinimalValueLowerBound = DBL_MIN * 5;
 
 StemmedFileInMemoryParser::StemmedFileInMemoryParser():
-    _nextCoord(0),
+    _nextCoord(1), // R needs indecies starting from 1
     minimalValue(DBL_MAX)
 {
 }
