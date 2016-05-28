@@ -19,7 +19,9 @@ public:
 
     bool storeTfidfInFile(const char* fileName);
 
-    inline std::list<std::unordered_map<unsigned, double>*>& getTfIdfResults() { return this->tfIdfResults; }
+    // document index mapped to result for file
+    typedef std::unordered_map<unsigned int, std::unordered_map<unsigned, double>*> TfIdfResults;
+    inline TfIdfResults& getTfIdfResults() { return this->tfIdfResults; }
 
 protected:
 
@@ -28,15 +30,17 @@ protected:
     double idf(size_t word);
 
     unsigned int _nextCoord;
+    std::list<std::pair<unsigned int, std::string>> _dictionary;
     double minimalValue;
     double quant;
     std::unordered_map<size_t, unsigned int> _wordsToCoords;
     std::unordered_map<unsigned int, size_t> _coordsToWords;
     std::unordered_map<size_t, unsigned int> _globalWordsCount;
+    std::list<std::pair<unsigned int, std::string>> _docName;
     std::unordered_map<unsigned int, unsigned int> _docsLens;
     std::unordered_map<size_t, unsigned int> _numberOfDocumentsWithGivenWords;
     std::unordered_map<unsigned int, std::unordered_map<size_t, unsigned int>* > _wordsCountPerDocument;
-    std::list<std::unordered_map<unsigned, double>*> tfIdfResults;
+    TfIdfResults tfIdfResults;
 
     std::hash<std::string> hash_fn;
 

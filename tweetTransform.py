@@ -96,7 +96,7 @@ class TweetForClustering:
     def __init__(self, isValid=False, tweetId=0, text='', placeObj=''):
         self.isValid = isValid
         self.tweetId = tweetId
-        self.text    = ''.join(text.split()) # utf-8 text, remove all new line, tab chars
+        self.text    = ' '.join(text.split()) # utf-8 text, remove all new line, tab chars
         if isValid == True:
 	    try:
 	        obj_iterator = iter(placeObj)

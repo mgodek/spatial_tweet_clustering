@@ -22,16 +22,16 @@ StemmedFileInMemoryParser::StemmedFileInMemoryParser():
 
 StemmedFileInMemoryParser::~StemmedFileInMemoryParser()
 {
-    for(auto pair : this->_wordsCountPerDocument)
+    for(auto &pair : this->_wordsCountPerDocument)
     {
         delete pair.second;
         pair.second = 0;
     }
 
-    for(auto map : this->tfIdfResults)
+    for(auto & map : this->tfIdfResults)
     {
-        delete map;
-        map = 0;
+        delete map.second;
+        map.second = 0;
     }
 }
 
@@ -52,6 +52,10 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName)
         std::unordered_map<size_t, unsigned int>* doc = new std::unordered_map<size_t, unsigned int>();
         std::unordered_map<size_t, bool> alreadyInserted;
 
+        // first word is a fileId, which should not be processed
+        std::string fileId;
+	inner >> fileId;
+
         while(!inner.eof())
         {
             std::string word;
@@ -59,7 +63,10 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName)
             ++lineLen;
             size_t hash = this->hash_fn(word);
             if(this->_wordsToCoords.count(hash) == 0)
+            {
                 this->_wordsToCoords.insert({hash, _nextCoord++});
+                this->_dictionary.push_back(std::pair<unsigned int, std::string>(_nextCoord, word));
+            }
             if(doc->count(hash) == 0)
                 doc->insert({hash, 1});
             else
@@ -78,6 +85,7 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName)
             }
         }
         unsigned docIndex = docNumber++;
+        this->_docName.push_back({docIndex, fileId});
         this->_docsLens.insert({docIndex, lineLen});
         this->_wordsCountPerDocument.insert({docIndex, doc});
     }
@@ -115,7 +123,7 @@ void StemmedFileInMemoryParser::countTfidf()
             unsigned coordsIndex = this->_wordsToCoords[word.first];
             map->insert({coordsIndex, tfidfOfWord});
         }
-        this->tfIdfResults.push_back(map);
+        this->tfIdfResults[wordPerDocPair.first] = map;
     }
     this->quant = this->minimalValue / 4;
 }
@@ -126,8 +134,11 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
     if(!out.is_open())
         return false;
     //out << _wordsCountPerDocument.size() << " " << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
-    for(auto map : this->tfIdfResults)
+    for(auto docName : this->_docName)
     { // for all docs
+        out << docName.second << ' '; // add fileId at the beginning
+        
+        auto map = this->tfIdfResults[docName.first];
         for(auto pair : *map)
         { // for all words in doc - counting tfidf
             if(pair.second < DBL_MIN)
@@ -136,8 +147,23 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
         }
         out << std::endl;
     }
-    out << std::ends;
+    //out << std::ends;
     out.flush();
     out.close();
+
+    // save dictionary
+    std::ofstream outDict("tfidfDictionary.txt", std::ios::trunc | std::ios::out);
+    if(outDict.is_open())
+    {
+        for(auto & entry : this->_dictionary)
+        {
+            outDict << entry.first << " : " << entry.second << std::endl;
+        }
+
+        //outDict << std::ends;
+        outDict.flush();
+        outDict.close();
+    }
+
     return true;
 }
