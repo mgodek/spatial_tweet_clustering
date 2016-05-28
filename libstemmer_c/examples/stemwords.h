@@ -28,7 +28,7 @@ stem_file(struct sb_stemmer * stemmer, FILE * f_in, FILE * f_out)
             int i = 0;
 	    int inlen = 0;
             while(1) {
-                if (ch == '\n' || ch == EOF) break;
+                if (ch == '\n' || ch == ' ' || ch == EOF) break;
                 if (i == lim) {
                     sb_symbol * newb;
 		    newb = (sb_symbol *)
@@ -75,7 +75,7 @@ stem_file(struct sb_stemmer * stemmer, FILE * f_in, FILE * f_out)
 		    }
 
 		    fputs((char *)stemmed, f_out);
-		    putc('\n', f_out);
+		    putc(' ', f_out);
 		}
             }
         }

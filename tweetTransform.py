@@ -12,25 +12,24 @@ import sys
 ###############################################################################
 
 class TweetsCoordinates:
-    #COORDS_STEM_PREFIX = "COORDS"
+
     def __init__(self, isValid=False, obj=''):
         self.isValid = isValid
         if isValid == True:
-            if 'coordinates' in obj : # and len(obj['coordinates']) >= 2 :
+            if 'coordinates' in obj :
                 coor = obj['coordinates']
-                #print( coor[0] )
-		self.longitude = coor[0][0][0]
-		self.latitude = coor[0][0][1]
+		self.longitude = ((int(coor[0][0][0]) + 180)/10)*10
+		self.latitude = ((int(coor[0][0][1])  + 90)/10)*10
             else:
 		self.isValid = False
 		print ('TweetsCoordinates fail: coordinates are wrong')
 		#print (obj)
 		#raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
-    
+
     def toString(self):
-        summary  = str(round(self.longitude))
+        summary  = "coordspdb"+str(self.longitude)
         summary += " "
-        summary += str(round(self.latitude))
+        summary += "coordspdb"+str(self.latitude)
         return summary
 
 ###############################################################################
@@ -40,7 +39,6 @@ class TweetsPlace:
     The tweet may simply refer to some place.
     Bounding box is defined as geoJSON, therefore for now skipping it.
     """
-    PLACE_STEM_PREFIX = "PLACE"
     def __init__(self, isValid=False, country='', full_name='', place_type='', coordinates=TweetsCoordinates()):
         self.isValid = isValid
         self.country = country       # country full name
@@ -51,11 +49,11 @@ class TweetsPlace:
         self.coordinates = coordinates
 
     def toString(self):
-        summary  = self.country
+        summary  = "countryspdb"+self.country
         summary += " "
-        summary += self.full_name
+        summary += "placenamespdb"+self.full_name
         summary += " "
-        summary += self.place_type
+        summary += "placetypespdb"+self.place_type
         summary += " "
         #print( "type ", type(self.coordinates.longitude), self.coordinates.longitude )
         summary += self.coordinates.toString()
@@ -128,37 +126,32 @@ def tweet_decoder(obj):
 
 def stemData(pathToRawTweets, pathToStemmedTweets):
     print( "Stem data in all files" )
-    shutil.rmtree( "tweetsTemp" )
-    os.mkdir("tweetsTemp")
+    tempWorkingDir = "tweetsTemp"
+    shutil.rmtree( tempWorkingDir, True )
+    os.mkdir(tempWorkingDir)
         
     for file in os.listdir(pathToRawTweets):
 	    print( '{0}\r'.format("Processing object file: %s" % file) ),
 	    #print( "Processing object file: %s" % file )
-	    fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file #os.path.join(root, file)
-	    f = open(fullFileName, 'r')
-	    
-	    # TODO how to open the file?
-	    # option 1
-	    #allLines = f.read()
-	    #tweet = json.loads(allLines, object_hook=tweet_decoder)
-	    # option 2
+	    fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file
+	    fIn = open(fullFileName, 'r')
+
 	    try:
-		tweet = tweet_decoder(json.load(f))#, object_hook=tweet_decoder)
+		tweet = tweet_decoder(json.load(fIn))
 	    except ValueError, ve:
-		print( "Decoding error ", json.dumps(f.read()) )
+		print( "Decoding error ", json.dumps(fIn.read()) )
 		continue
 
 	    if tweet.isValid == False:
 		print("Invalid object file: %s" % file)
 		try:
-		    #print json.dumps(allLines, indent=4, sort_keys=False)
 		    print json.dump(tweet, indent=4, sort_keys=False)
 		except TypeError, te:
-		    #print( allLines )
-		    print( f.read() )
-		    f.close()
+		    print( fIn.read() )
+                fIn.close()
+                os.remove(fullFileName)
 		continue
-	    f.close()
+	    fIn.close()
 
 	    #print("Stemming object file: %s" % file)
 	    fileForStem = fullFileName.replace( "tweets", "tweetsTemp" )
@@ -168,7 +161,8 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
 	    exclude = set(string.punctuation)
 	    tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude) # remove punctuations
 	    #print( "tweetForStem: %s" % tweetForStem ) 
-	    outfile.write(''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])) # discard unicode specific characters
+            tweetForStemClean = ''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])  # discard unicode specific characters
+	    outfile.write(tweetForStemClean)
 	    #print( " %s " % tweetForStem )
 	    outfile.close()
 
@@ -180,28 +174,31 @@ def stemData(pathToRawTweets, pathToStemmedTweets):
 	    #print( "stem ret ", ret )
 
     print # go to next line
+    shutil.rmtree( tempWorkingDir, True )
 
 ###############################################################################
 
 def tfidfData(pathToStemmedTweets):
-    print( "TFIDF data in all files" )
-    for root, dirs, files in os.walk(pathToStemmedTweets, topdown=False):
-        for file in files:
-            fullFileName = os.path.join(root, file)
+    print( "TFIDF data in all files. Concat tweets" )
 
-	    # run C code for tfidf
-	    from ctypes import cdll
-	    lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
+    #TODO
 
-	    class TFIDF(object):
-		def __init__(self):
-		    self.obj = lib.TFIDF_New()
+    for file in os.listdir(pathToStemmedTweets):
+        fullFileName = os.getcwd()+"/"+pathToStemmedTweets+"/"+file
 
-		def parse(self, fullFileName):
-		    lib.TFIDF_Run(self.obj, fullFileName)
+	# run C code for tfidf
+	from ctypes import cdll
+	lib = cdll.LoadLibrary('./cmake_tfidf/libtfidf.so')
+    
+        class TFIDF(object):
+	    def __init__(self):
+	        self.obj = lib.TFIDF_New()
 
-	    tfidf = TFIDF()
-	    tfidf.parse(fullFileName) 
+	    def parse(self, fullFileName):
+	        lib.TFIDF_Run(self.obj, fullFileName)
+
+	tfidf = TFIDF()
+	tfidf.parse(fullFileName) 
 
 ###############################################################################
 
