@@ -152,7 +152,7 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
     out.close();
 
     // save dictionary
-    std::ofstream outDict("tfidfDictionary.txt", std::ios::trunc | std::ios::out);
+    std::ofstream outDict("summaryTfidfDictionary.txt", std::ios::trunc | std::ios::out);
     if(outDict.is_open())
     {
         for(auto & entry : this->_dictionary)

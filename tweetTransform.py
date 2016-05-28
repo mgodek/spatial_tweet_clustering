@@ -26,8 +26,8 @@ class TweetsCoordinates:
         if isValid == True:
             if 'coordinates' in obj :
                 coor = obj['coordinates']
-		self.longitude = ((int(coor[0][0][0]) + 180)/10)*10 # round up to 10s of degrees
-		self.latitude = ((int(coor[0][0][1])  + 90)/10)*10
+		self.longitude = (int(coor[0][0][0]) + 180)
+		self.latitude = (int(coor[0][0][1])  + 90)
             else:
 		self.isValid = False
 		print ('TweetsCoordinates fail: coordinates are wrong')
