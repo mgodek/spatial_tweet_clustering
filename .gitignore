@@ -9,3 +9,4 @@ cmake_tfidf/*
 cmake_stemmer/*
 claraOutputNaive.txt
 claraOutputLessN.txt
+summary*.txt

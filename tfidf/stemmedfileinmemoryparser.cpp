@@ -1,5 +1,6 @@
 #include "stemmedfileinmemoryparser.h"
 
+#include <set>
 #include <cmath>
 #include <cfloat>
 #include <fstream>
@@ -15,33 +16,48 @@
 double StemmedFileInMemoryParser::MinimalValueLowerBound = DBL_MIN * 5;
 
 StemmedFileInMemoryParser::StemmedFileInMemoryParser():
-    _nextCoord(0),
+    _nextCoord(1), // R needs indecies starting from 1
     minimalValue(DBL_MAX)
 {
 }
 
 StemmedFileInMemoryParser::~StemmedFileInMemoryParser()
 {
-    for(auto pair : this->_wordsCountPerDocument)
+    for(auto &pair : this->_wordsCountPerDocument)
     {
         delete pair.second;
         pair.second = 0;
     }
 
-    for(auto map : this->tfIdfResults)
+    for(auto & map : this->tfIdfResults)
     {
-        delete map;
-        map = 0;
+        delete map.second;
+        map.second = 0;
     }
 }
 
-bool StemmedFileInMemoryParser::loadData(const char* fileName, bool skipFirstWordPerLine)
+bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* stopWordFile)
 {
-    std::ifstream in(fileName, std::ios::in);
+    std::cout << __FUNCTION__ << std::endl;
+
+    std::ifstream stopWordFin(stopWordFile, std::ios::in);
+    std::set<std::string> stopWords;
+    if(stopWordFin.is_open())
+    {
+        std::cout << "Using stop word list" << std::endl;
+        while(!stopWordFin.eof())
+        {
+            std::string line;
+            std::getline(stopWordFin, line);
+            stopWords.insert(line);
+        }
+        std::cout << "Stop words list size: " << stopWords.size() << std::endl;
+    }
+
+    std::ifstream in(stemmedFile, std::ios::in);
     if(!in.is_open())
         return false;
     unsigned docNumber = 0;
-    bool first = false;
     while(!in.eof())
     {
         std::string line;
@@ -52,20 +68,29 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName, bool skipFirstWor
         unsigned int lineLen = 0;
         std::unordered_map<size_t, unsigned int>* doc = new std::unordered_map<size_t, unsigned int>();
         std::unordered_map<size_t, bool> alreadyInserted;
-	first = true;
-        while(!inner.eof()) // iterating over line
+
+        // first word is a fileId, which should not be processed
+        std::string fileId;
+	inner >> fileId;
+
+        while(!inner.eof())
         {
-	    if(skipFirstWordPerLine && first) 
-	    {
-	      first = false;
-	      continue;
-	    }
             std::string word;
             inner >> word;
             ++lineLen;
+            if ( stopWords.find(word) != stopWords.end() )
+            {
+                // skip stopword
+                //std::cout << "Skipping " << word << std::endl;
+                continue;
+            }
+
             size_t hash = this->hash_fn(word);
             if(this->_wordsToCoords.count(hash) == 0)
+            {
                 this->_wordsToCoords.insert({hash, _nextCoord++});
+                this->_dictionary[_nextCoord] = word;
+            }
             if(doc->count(hash) == 0)
                 doc->insert({hash, 1});
             else
@@ -84,6 +109,7 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName, bool skipFirstWor
             }
         }
         unsigned docIndex = docNumber++;
+        this->_docName.push_back({docIndex, fileId});
         this->_docsLens.insert({docIndex, lineLen});
         this->_wordsCountPerDocument.insert({docIndex, doc});
     }
@@ -110,6 +136,7 @@ double StemmedFileInMemoryParser::idf(size_t word)
 
 void StemmedFileInMemoryParser::countTfidf()
 {
+    std::cout << __FUNCTION__ << std::endl;
     for(auto wordPerDocPair : this->_wordsCountPerDocument)
     { // for all docs
         std::unordered_map<unsigned, double>* map = new std::unordered_map<unsigned, double>();
@@ -121,20 +148,55 @@ void StemmedFileInMemoryParser::countTfidf()
             unsigned coordsIndex = this->_wordsToCoords[word.first];
             map->insert({coordsIndex, tfidfOfWord});
         }
-        this->tfIdfResults.push_back(map);
+        this->tfIdfResults[wordPerDocPair.first] = map;
     }
     this->quant = this->minimalValue / 4;
 }
 
-bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
+void StemmedFileInMemoryParser::createStopWordList(double threshold, const char* stopWordFile)
 {
-    std::ofstream out(fileName, std::ios::trunc | std::ios::out);
+    std::cout << __FUNCTION__ << " threshold=" << threshold << std::endl;
+    // list stop words
+
+    std::set<unsigned int> toRemove;
+    for( auto & results : this->tfIdfResults )
+    {
+        for(auto & pair : *results.second)
+        {
+            if(pair.second < threshold)
+            {
+                toRemove.insert(pair.first);
+            }
+        }
+    }
+
+    // save to remove words
+    std::ofstream outDict(stopWordFile, std::ios::trunc | std::ios::out);
+    if(outDict.is_open())
+    {
+        for(auto & entry : toRemove)
+        {
+            outDict << this->_dictionary[entry] << std::endl;
+        }
+
+        //outDict << std::ends;
+        outDict.flush();
+        outDict.close();
+    }
+}
+
+bool StemmedFileInMemoryParser::storeTfidfInFile(const char* tfidfFileName, const char* dictFileName)
+{
+    std::cout << __FUNCTION__ << std::endl;
+    std::ofstream out(tfidfFileName, std::ios::trunc | std::ios::out);
     if(!out.is_open())
         return false;
-    out << _wordsCountPerDocument.size() << " "
-        << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
-    for(auto map : this->tfIdfResults)
+    //out << _wordsCountPerDocument.size() << " " << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
+    for(auto docName : this->_docName)
     { // for all docs
+        out << docName.second << ' '; // add fileId at the beginning
+        
+        auto map = this->tfIdfResults[docName.first];
         for(auto pair : *map)
         { // for all words in doc - counting tfidf
             if(pair.second < DBL_MIN)
@@ -143,8 +205,23 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
         }
         out << std::endl;
     }
-    out << std::ends;
+    //out << std::ends;
     out.flush();
     out.close();
+
+    // save dictionary
+    std::ofstream outDict(dictFileName, std::ios::trunc | std::ios::out);
+    if(outDict.is_open())
+    {
+        for(auto & entry : this->_dictionary)
+        {
+            outDict << entry.first << " : " << entry.second << std::endl;
+        }
+
+        //outDict << std::ends;
+        outDict.flush();
+        outDict.close();
+    }
+
     return true;
 }

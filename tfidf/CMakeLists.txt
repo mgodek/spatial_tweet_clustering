@@ -9,7 +9,3 @@ file( GLOB_RECURSE TFIDF_FILES
 )
 
 add_library(tfidf SHARED ${TFIDF_FILES})
-
-add_executable(tfidf_make main.cpp)
-
-TARGET_LINK_LIBRARIES(tfidf_make tfidf)

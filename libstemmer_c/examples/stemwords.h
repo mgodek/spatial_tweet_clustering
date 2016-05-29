@@ -19,6 +19,8 @@ stem_file(struct sb_stemmer * stemmer, FILE * f_in, FILE * f_out)
     int lim = INC;
     sb_symbol * b = (sb_symbol *) malloc(lim * sizeof(sb_symbol));
 
+    int lastWordInLine = 0;
+
     while(1) {
         int ch = getc(f_in);
         if (ch == EOF) {
@@ -28,7 +30,15 @@ stem_file(struct sb_stemmer * stemmer, FILE * f_in, FILE * f_out)
             int i = 0;
 	    int inlen = 0;
             while(1) {
-                if (ch == '\n' || ch == EOF) break;
+                lastWordInLine = 0;
+                if (ch == '\n' || ch == ' ' || ch == EOF)
+                {
+                     if (ch == '\n')
+                     {
+                         lastWordInLine = 1;
+                     }
+                     break;
+                }
                 if (i == lim) {
                     sb_symbol * newb;
 		    newb = (sb_symbol *)
@@ -75,7 +85,8 @@ stem_file(struct sb_stemmer * stemmer, FILE * f_in, FILE * f_out)
 		    }
 
 		    fputs((char *)stemmed, f_out);
-		    putc('\n', f_out);
+                    char endLine = lastWordInLine == 1 ? '\n' : ' ';       
+		    putc(endLine, f_out);
 		}
             }
         }

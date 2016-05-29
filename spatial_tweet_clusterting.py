@@ -1,33 +1,35 @@
-from __future__ import absolute_import, print_function
 
+###############################################################################
+
+from __future__ import absolute_import, print_function
 import shutil
 import sys, os, signal, time
 import tweetFetcher
 import clusterModule
 import tweetTransform
-
 import numpy as np
-from tweetTransform import prepareDataForStemming, stemData, tfidfData, makeMatrixFiles
+from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 
-from time import gmtime, strftime
-
 pathToRawTweets        = "tweets"
-pathToStemmedTweets    = "tweetsStemmed.txt"
-tweetsMatrixFile       = "claraTweetsMatrixFile.txt"  # matrix with each row being a set of ints
-tweetsFeatureListFile  = "claraTweetsFeatureList.txt" # mapping between stemmed features and ints
+summaryParsedTweets    = "summaryParsedTweets.txt"
+summaryStemmedTweets   = 'summaryStemmedTweets.txt'
+summaryTfidfTweets     = 'summaryTfidfTweets.txt'
+summaryStopWords       = 'summaryTfidfStopWords.txt'
+summaryDictionaryFile  = 'summaryTfidfDictionary.txt'
+tweetsMatrixFile       = "summaryClaraTweetsMatrixFile.txt"  # matrix with each row being a set of weights (column position indicated feature)
 clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
-pathToPreStemmedTweets = "preStemmed.txt"
-pathToPreparedStemms   = "preparedStemms.txt"
-reload(sys)
-sys.setdefaultencoding('utf-8')
+
+###############################################################################
 
 def signal_handler(signal, frame):
     print('You pressed Ctrl+C!')
     #sys.exit(0)
     main_menu()
+
+###############################################################################
 
 def main_menu():
     os.system('clear')
@@ -46,7 +48,11 @@ def main_menu():
  
     return
 
+###############################################################################
+
 menu_actions  = {}
+
+###############################################################################
 
 def exec_menu(choice):
     os.system('clear')
@@ -61,6 +67,8 @@ def exec_menu(choice):
             menu_actions['main_menu']()
     return
 
+###############################################################################
+
 def setup():
     print ( "Running setup" )
     #TODO run start.sh ?
@@ -68,13 +76,15 @@ def setup():
     if os.getuid() == 0:
         setupCluster()
     else:
-        print ("This program is not run as sudo so this function will not work")
+	print ("This program is not run as sudo so this function will not work")
 
     print ("9. Back")
     print ("0. Quit")
     choice = raw_input(" >>  ")
     exec_menu(choice)
     return
+
+###############################################################################
 
 def fetchTweetsMenu():
     amount = 1000
@@ -90,6 +100,8 @@ def fetchTweetsMenu():
     choice = raw_input(" >>  ")
     exec_menu(choice)
     return
+
+###############################################################################
  
 def fetchTweetsPeriodicallyMenu():
     amount = 5000
@@ -105,7 +117,7 @@ def fetchTweetsPeriodicallyMenu():
         except KeyboardInterrupt, e:
             print( "Interrupted" )
 
-    if x + 1 < times:
+	if x + 1 < times:
             print( "Waiting ", hours, " hours for round ", x+1, " out of ", times )
             time.sleep(3600*hours)
 
@@ -116,27 +128,58 @@ def fetchTweetsPeriodicallyMenu():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def transformTweetDataMenu():
     print ( "Transforming raw json tweets to R input" )
 
-    print ( "Prepare raw data for stemming? Y/n" )
-    choice = raw_input(" >>  ")
-    prepResults = None
-    if choice == 'Y':
-        prepResults = prepareDataForStemming(pathToRawTweets, pathToPreStemmedTweets)
-    print ("Please run ./stemwords program on %s file as input and %s as output, using -p2 option"%(pathToPreStemmedTweets, pathToPreparedStemms))
-    print ("After it's done %s file will be used as input to the next step"%pathToPreparedStemms)
-    print ( "Stem raw data? Y/n" )
-    choice = raw_input(" >>  ")
-    if choice == 'Y':
-        stemData(pathToPreparedStemms, pathToStemmedTweets, prepResults)
+    global interactive
 
-    print ( "TFIDF stemmed data? Y/n" )
-    choice = raw_input(" >>  ")
-    if choice == 'Y':
-        tfidfData(pathToStemmedTweets)
+    if interactive == True:
+        print ( "Parse raw data? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+             parseData(pathToRawTweets, summaryParsedTweets)
+    else:
+        parseData(pathToRawTweets, summaryParsedTweets)
 
-    makeMatrixFiles(pathToStemmedTweets, tweetsMatrixFile, tweetsFeatureListFile)    
+    if interactive == True:
+        print ( "Stem parsed data? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            stemData(summaryParsedTweets, summaryStemmedTweets)
+    else:
+        stemData(summaryParsedTweets, summaryStemmedTweets)
+
+    threshold = float(0.5)
+    sampleRatio = 0.3
+    if interactive == True:
+        print ( "TFIDF stemmed data?" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            print ( "Specify threshold? default=%s" % str(threshold) )
+            choice = raw_input(" >>  ")
+            if choice != '':
+                threshold=float(choice)
+
+            print ( "Specify sampleRatio? default=%s" % str(sampleRatio) )
+            choice = raw_input(" >>  ")
+            if choice != '':
+                sampleRatio=float(choice)
+
+            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+                      summaryDictionaryFile, threshold, sampleRatio)
+    else:
+            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+                      summaryDictionaryFile, threshold, sampleRatio)
+
+    if interactive == True:
+        print ( "Make matrix? y/n" )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
+    else:
+        makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
 
     print ("9. Back")
     print ("0. Quit")
@@ -144,11 +187,18 @@ def transformTweetDataMenu():
     exec_menu(choice)
     return
 
-def clusterTweetsNaiveMenu():
-    print ("Clustering tweets with Clara - naive approach !")
+###############################################################################
 
-    print ("How many clusters do You want to create?")
-    k = raw_input(" >>  ")
+def clusterTweetsNaiveMenu():
+    print ("Clustering tweets with Clara - naive approach !") 
+
+    print ("How many clusters do You want to create? (default=7)")
+    kRead = raw_input(" >>  ")
+    k = 7
+    try:
+        k = int(kRead)
+    except ValueError:
+        k = 7
 
     clusterClara(tweetsMatrixFile, k, clusterNaiveResultFile)
 
@@ -157,6 +207,8 @@ def clusterTweetsNaiveMenu():
     choice = raw_input(" >>  ")
     exec_menu(choice)
     return
+
+###############################################################################
 
 def clusterTweetsLessNaiveMenu():
     print ("Clustering tweets with Clara - less naive approach !")
@@ -174,6 +226,8 @@ def clusterTweetsLessNaiveMenu():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def viewResultsMenu():
     print ("Viewing results !")
 
@@ -186,11 +240,17 @@ def viewResultsMenu():
     exec_menu(choice)
     return
 
+###############################################################################
+
 def back():
     menu_actions['main_menu']()
 
+###############################################################################
+
 def exit():
     sys.exit()
+
+###############################################################################
  
 # Menu definition
 menu_actions = {
@@ -208,4 +268,13 @@ menu_actions = {
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
+    global interactive
+    interactive = False
+    for x in sys.argv[1:]:
+        if x == "i":
+            interactive = True
+
     main_menu()
+
+###############################################################################
+
