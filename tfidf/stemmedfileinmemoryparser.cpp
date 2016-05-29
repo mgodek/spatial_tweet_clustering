@@ -153,17 +153,18 @@ void StemmedFileInMemoryParser::countTfidf()
     this->quant = this->minimalValue / 4;
 }
 
-void StemmedFileInMemoryParser::createStopWordList(double threshold, const char* stopWordFile)
+void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper, double thresholdBottom, const char* stopWordFile)
 {
-    std::cout << __FUNCTION__ << " threshold=" << threshold << std::endl;
-    // list stop words
+    std::cout << __FUNCTION__ << std::endl;
 
+    // list stop words
     std::set<unsigned int> toRemove;
     for( auto & results : this->tfIdfResults )
     {
         for(auto & pair : *results.second)
         {
-            if(pair.second < threshold)
+            if( pair.second < thresholdBottom ||
+                pair.second > thresholdUpper )
             {
                 toRemove.insert(pair.first);
             }

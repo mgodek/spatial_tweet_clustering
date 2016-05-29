@@ -55,7 +55,7 @@ menu_actions  = {}
 ###############################################################################
 
 def exec_menu(choice):
-    os.system('clear')
+    #os.system('clear')
     ch = choice.lower()
     if ch == '':
         menu_actions['main_menu']()
@@ -87,7 +87,14 @@ def setup():
 ###############################################################################
 
 def fetchTweetsMenu():
-    amount = 1000
+    amount = 30000
+    print ("How much tweets to fetch? default=%d " % amount )
+    amountRead = raw_input(" >>  ")
+    try:
+        amount = int(amountRead)
+    except ValueError:
+        amount = 30000
+        
     print ("Fetching ", amount, " tweets !")
     
     try:
@@ -151,16 +158,22 @@ def transformTweetDataMenu():
     else:
         stemData(summaryParsedTweets, summaryStemmedTweets)
 
-    threshold = float(0.5)
+    thresholdBottom = float(0.4)
+    thresholdUpper  = float(0.9)
     sampleRatio = 0.3
     if interactive == True:
         print ( "TFIDF stemmed data?" )
         choice = raw_input(" >>  ")
         if choice == 'y':
-            print ( "Specify threshold? default=%s" % str(threshold) )
+            print ( "Specify threshold bottom? default=%s" % str(thresholdBottom) )
             choice = raw_input(" >>  ")
             if choice != '':
-                threshold=float(choice)
+                thresholdBottom=float(choice)
+
+            print ( "Specify threshold upper? default=%s" % str(thresholdUpper) )
+            choice = raw_input(" >>  ")
+            if choice != '':
+                thresholdUpper=float(choice)
 
             print ( "Specify sampleRatio? default=%s" % str(sampleRatio) )
             choice = raw_input(" >>  ")
@@ -168,10 +181,10 @@ def transformTweetDataMenu():
                 sampleRatio=float(choice)
 
             tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-                      summaryDictionaryFile, threshold, sampleRatio)
+                      summaryDictionaryFile, thresholdUpper, thresholdBottom, sampleRatio)
     else:
             tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-                      summaryDictionaryFile, threshold, sampleRatio)
+                      summaryDictionaryFile, thresholdUpper, thresholdBottom, sampleRatio)
 
     if interactive == True:
         print ( "Make matrix? y/n" )

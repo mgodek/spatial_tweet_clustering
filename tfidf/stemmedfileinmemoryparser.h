@@ -17,7 +17,7 @@ public:
 
     void countTfidf();
 
-    void createStopWordList(double threshold, const char* stopWordFile);
+    void createStopWordList(double thresholdUpper, double thresholdBottom, const char* stopWordFile);
 
     bool storeTfidfInFile(const char* tfidfFile, const char* dictFileName);
 
@@ -58,13 +58,14 @@ extern "C" {
     void TFIDF_CreateStopWordList_Run( StemmedFileInMemoryParser* parser,
                                        const char* stemmedFile,
                                        const char* tfidfFile,
-                                       double      threshold,
+                                       double      thresholdUpper,
+                                       double      thresholdBottom,
                                        const char* stopWordFile )
     {
 	parser->loadData(stemmedFile, stopWordFile);
 	parser->countTfidf();
 
-        parser->createStopWordList(threshold, stopWordFile);
+        parser->createStopWordList(thresholdUpper, thresholdBottom, stopWordFile);
     }
 
     void TFIDF_UseStopWordList_Run( StemmedFileInMemoryParser* parser,

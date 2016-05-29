@@ -49,7 +49,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          c <- as.numeric(t(coorMat[,2]))
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
-         clarax <- clara(matSp, k, samples=50)
+         clarax <- clara(matSp, k, samples=200, sampsize=max(r)/100, stand=TRUE, rngR=TRUE)
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
          #all.equal(clarax[-8], clara(matSp, k, samples=50, pamLike = TRUE)[-8])
          #plot(clarax)
