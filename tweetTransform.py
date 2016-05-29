@@ -203,13 +203,13 @@ def stemData(summaryParsedTweets, summaryStemmedTweets):
 
 ###############################################################################
 
-def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords):
+def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+              dictionaryFile, threshold, sampleRatio):
     print( "TFIDFing stemmed data..." )
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
+    removeFile(dictionaryFile)
 
-    threshold = c_double(0.8) #TODO ask user
-    sampleSize = 0.2 #TODO ask user for ratio
     fIn = open(summaryStemmedTweets, 'r')
     lineCount = 0
     for line in fIn:
@@ -219,15 +219,15 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords):
     stemFileReduced = "summaryStemFileReduced.txt"
     removeFile(stemFileReduced)
     fOut = open(stemFileReduced, 'w')
-    outputSetSize = int(lineCount*sampleSize)
-    print( "Desired outputSetSize %d" % outputSetSize )
+    outputSetSize = int(lineCount*sampleRatio)
+    print( "Desired tweet set size %d" % outputSetSize )
     lineSet = random.sample(range(1,lineCount,1), outputSetSize)
     lineCount = 0
     fIn = open(summaryStemmedTweets, 'r')
     for line in fIn:
         lineCount = lineCount + 1
         if lineCount in lineSet:
-            fOut.write(line+'\n')
+            fOut.write(line)
 
     fOut.close()
     fIn.close()
@@ -245,14 +245,14 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords):
 	def preRun(self, stemFileIn, tfidfFileOut, threshold, stopWordFileInOut):
 	    lib.TFIDF_CreateStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, threshold, stopWordFileInOut)
 
-	def run(self, stemFileIn, tfidfFileOut, stopWordFileInOut):
-	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut)
+	def run(self, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut):
+	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut)
 
     tfidf = TFIDF()
     tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, threshold, summaryStopWords)
 
     tfidf = TFIDF()
-    tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords)
+    tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords, dictionaryFile)
     
 
     bashCommand = "wc -l summaryTfidfDictionary.txt"
@@ -261,7 +261,7 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords):
     #bashCommand = "cut -f 1 -d ' '"
     #process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     #output = process.communicate()[0]
-    print( "TFIDF with threshold %s resulted features size is %s " % (str(threshold), output) )
+    print( "TFIDF resulted features size is %s " % (output) )
 
 ###############################################################################
 
@@ -281,7 +281,6 @@ def makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
 
         #matrixEntries: each value is given in triple (row coordinate, column coordinate, value)
 
-        #fill missing with 0
         currentIndex = 0
         for entry in wordCollection:
             if entry.strip() == '':

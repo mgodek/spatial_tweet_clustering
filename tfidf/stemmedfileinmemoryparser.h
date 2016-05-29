@@ -19,7 +19,7 @@ public:
 
     void createStopWordList(double threshold, const char* stopWordFile);
 
-    bool storeTfidfInFile(const char* tfidfFile);
+    bool storeTfidfInFile(const char* tfidfFile, const char* dictFileName);
 
     // document index mapped to result for file
     typedef std::unordered_map<unsigned int, std::unordered_map<unsigned, double>*> TfIdfResults;
@@ -70,12 +70,13 @@ extern "C" {
     void TFIDF_UseStopWordList_Run( StemmedFileInMemoryParser* parser,
                                     const char* stemmedFile,
                                     const char* tfidfFile,
-                                    const char* stopWordFile )
+                                    const char* stopWordFile,
+                                    const char* dictFile )
     {
 	parser->loadData(stemmedFile, stopWordFile);
 	parser->countTfidf();
 
-        parser->storeTfidfInFile(tfidfFile);
+        parser->storeTfidfInFile(tfidfFile, dictFile);
     }
 }
 

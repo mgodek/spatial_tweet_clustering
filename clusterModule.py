@@ -49,11 +49,11 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          c <- as.numeric(t(coorMat[,2]))
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
-         #clarax <- clara(matSp[1:600,1:500], k, samples=50) TODO need to decrease the size of data
          clarax <- clara(matSp, k, samples=50)
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
          #all.equal(clarax[-8], clara(matSp, k, samples=50, pamLike = TRUE)[-8])
          #plot(clarax)
+         print(clarax)
 	 save(clarax,file=outputFile)
       }
     ''')
@@ -69,7 +69,7 @@ def clusterResults(clusterDataFile):
     r_execShowResults = robjects.r('''
       function(outputFileName) {         
 	 clarax <- load(outputFileName)
-         plot(clarax) #TODO need to check how to load and save data frame data. This approach fails
+         #plot(clarax) #TODO need to check how to load and save data frame data. This approach fails
      }
     ''')
     r_execShowResults(clusterDataFile)

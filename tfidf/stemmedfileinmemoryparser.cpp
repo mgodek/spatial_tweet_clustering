@@ -185,10 +185,10 @@ void StemmedFileInMemoryParser::createStopWordList(double threshold, const char*
     }
 }
 
-bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
+bool StemmedFileInMemoryParser::storeTfidfInFile(const char* tfidfFileName, const char* dictFileName)
 {
     std::cout << __FUNCTION__ << std::endl;
-    std::ofstream out(fileName, std::ios::trunc | std::ios::out);
+    std::ofstream out(tfidfFileName, std::ios::trunc | std::ios::out);
     if(!out.is_open())
         return false;
     //out << _wordsCountPerDocument.size() << " " << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
@@ -210,7 +210,7 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
     out.close();
 
     // save dictionary
-    std::ofstream outDict("summaryTfidfDictionary.txt", std::ios::trunc | std::ios::out);
+    std::ofstream outDict(dictFileName, std::ios::trunc | std::ios::out);
     if(outDict.is_open())
     {
         for(auto & entry : this->_dictionary)

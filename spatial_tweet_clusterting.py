@@ -11,12 +11,14 @@ import numpy as np
 from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
+from ctypes import *
 
 pathToRawTweets        = "tweets"
 summaryParsedTweets    = "summaryParsedTweets.txt"
 summaryStemmedTweets   = 'summaryStemmedTweets.txt'
 summaryTfidfTweets     = 'summaryTfidfTweets.txt'
 summaryStopWords       = 'summaryTfidfStopWords.txt'
+summaryDictionaryFile  = 'summaryTfidfDictionary.txt'
 tweetsMatrixFile       = "summaryClaraTweetsMatrixFile.txt"  # matrix with each row being a set of weights (column position indicated feature)
 clusterNaiveResultFile = "claraOutputNaive.txt"
 clusterLessNResultFile = "claraOutputLessN.txt"
@@ -150,13 +152,27 @@ def transformTweetDataMenu():
     else:
         stemData(summaryParsedTweets, summaryStemmedTweets)
 
+    threshold = c_double(0.0005)
+    sampleRatio = 0.3
     if interactive == True:
-        print ( "TFIDF stemmed data? y/n" )
+        print ( "TFIDF stemmed data?" )
         choice = raw_input(" >>  ")
         if choice == 'y':
-            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords)
+            print ( "Specify threshold? default=%s" % str(threshold) )
+            choice = raw_input(" >>  ")
+            if choice != '':
+                threshold=c_double(choice)
+
+            print ( "Specify sampleRatio? default=%s" % str(sampleRatio) )
+            choice = raw_input(" >>  ")
+            if choice != '':
+                sampleRatio=float(choice)
+
+            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+                      summaryDictionaryFile, threshold, sampleRatio)
     else:
-        tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords)
+            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+                      summaryDictionaryFile, threshold, sampleRatio)
 
     if interactive == True:
         print ( "Make matrix? y/n" )
