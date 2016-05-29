@@ -89,4 +89,6 @@ def fetchTweets(amount):
     auth = OAuthHandler(aTok.consumer_key, aTok.consumer_secret)
     auth.set_access_token(aTok.access_token, aTok.access_token_secret)
     stream = Stream(auth, l)
-    stream.filter(languages=["en"], locations=[-180.0,-90.0,180.0,90.0])
+    EUROPE_BB=[-31.266001, 27.636311, 39.869301, 81.008797]
+    WORLD_BB=[-180.0,-90.0,180.0,90.0]
+    stream.filter(languages=["en"], locations=EUROPE_BB)

@@ -30,8 +30,8 @@ class TweetsCoordinates:
         if isValid == True:
             if 'coordinates' in obj :
                 coor = obj['coordinates']
-		self.longitude = (int(coor[0][0][0]) + 180)
-		self.latitude = (int(coor[0][0][1])  + 90)
+		self.longitude = round((int(coor[0][0][0]) + 180)+5)
+		self.latitude = round((int(coor[0][0][1])  + 90)+5)
             else:
 		self.isValid = False
 		print ('TweetsCoordinates fail: coordinates are wrong')
@@ -87,7 +87,6 @@ def placeDecoder(obj):
 		           TweetsCoordinates(True, obj['bounding_box']))
     else:
         print ('place_decoder fail: missing country, full_name, place_type or bounding_box')
-        #print (obj)
         return TweetsPlace()
 
 ###############################################################################
@@ -97,17 +96,28 @@ class TweetForClustering:
     needed for clustering algorithms.
     """   
 
-    def __init__(self, isValid=False, tweetId=0, text='', placeObj=''):
+    def __init__(self, isValid=False, tweetId=0, text='', placeObj='', userObj=''):
         self.isValid = isValid
         self.tweetId = tweetId
         self.text    = ' '.join(text.split()) # utf-8 text, remove all new line, tab chars
-        if isValid == True:
-	    try:
-	        obj_iterator = iter(placeObj)
-	        self.place = placeDecoder(placeObj)
-	    except TypeError, te:
-		print( 'TweetForClustering: placeObj is not iterable', placeObj )
-		self.isValid = False
+        if self.isValid == True:
+            self.place = placeDecoder(placeObj)	    
+            if self.place.isValid == False:
+                self.isValid = False
+                print( 'TweetForClustering: placeObj is not valid' )
+
+            if len(self.text) < 40: # TODO maybe should have other value
+                self.isValid = False
+                print( 'TweetForClustering: text is too short %d < %d' % (len(self.text), 50) )
+
+            # decode userObj
+            try:
+                obj_iterator = iter(userObj)
+                self.userLocation = str(userObj['location']).replace(" ", "")
+            except:
+                self.isValid = False
+                print( 'userObj is not iterable' )
+                return
 
     def dump(obj):
         for attr in dir(obj):
@@ -115,6 +125,8 @@ class TweetForClustering:
 
     def toString(self):
         summary  = self.text
+        summary += " "
+        summary += "spdbuserlocation"+self.userLocation
         summary += " "
         summary += self.place.toString()
         return summary
@@ -128,13 +140,16 @@ def tweetDecoder(obj):
         print( obj, 'tweet_decoder is not iterable' )
         return TweetForClustering()
    
-    if 'id_str' and 'text' and 'place' in obj_iterator:
-        tweet = TweetForClustering(True, obj['id_str'], obj['text'], obj['place'])
-        return tweet
-    else:
-        print ('tweet_decoder fail: missing id_str or text or place')
+    try:
+        if 'id_str' and 'text' and 'place' and 'user' in obj_iterator:
+            tweet = TweetForClustering(True, obj['id_str'], obj['text'], obj['place'], obj['user'])
+            if tweet.isValid == True:
+                return tweet
+    except KeyError, ke:
+        print ('tweet_decoder fail: missing id_str or text or place or user')
         #print (obj) #json.dumps(obj, indent=4, sort_keys=False)
-        return TweetForClustering()
+
+    return TweetForClustering()
 
 ###############################################################################
 
@@ -146,7 +161,6 @@ def parseData(pathToRawTweets, summaryParsedTweets):
 
     for file in os.listdir(pathToRawTweets):
         print( '{0}\r'.format("Parsing: %s" % file) ),
-	#print( "Processing object file: %s" % file )
 	fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file
 	fIn = open(fullFileName, 'r')
 
@@ -204,7 +218,7 @@ def stemData(summaryParsedTweets, summaryStemmedTweets):
 ###############################################################################
 
 def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-              dictionaryFile, threshold, sampleRatio):
+              dictionaryFile, thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio):
     print( "TFIDFing stemmed data..." )
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
@@ -219,20 +233,20 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
     stemFileReduced = "summaryStemFileReduced.txt"
     removeFile(stemFileReduced)
     fOut = open(stemFileReduced, 'w')
-    outputSetSize = int(lineCount*sampleRatio)
-    print( "Desired tweet set size %d" % outputSetSize )
-    lineSet = random.sample(range(1,lineCount,1), outputSetSize)
-    lineCount = 0
-    fIn = open(summaryStemmedTweets, 'r')
-    for line in fIn:
-        lineCount = lineCount + 1
-        if lineCount in lineSet:
-            fOut.write(line)
+    if sampleRatio < 1:
+        outputSetSize = int(lineCount*sampleRatio)
+        print( "Desired tweet set size %d" % outputSetSize )
+        lineSet = random.sample(range(1,lineCount,1), outputSetSize)
+        lineCount = 0
+        fIn = open(summaryStemmedTweets, 'r')
+        for line in fIn:
+            lineCount = lineCount + 1
+            if lineCount in lineSet:
+                fOut.write(line)
 
-    fOut.close()
-    fIn.close()
-
-    summaryStemmedTweets = stemFileReduced
+        fOut.close()
+        fIn.close()
+        summaryStemmedTweets = stemFileReduced
 
     # run C code for tfidf
     from ctypes import cdll
@@ -242,14 +256,14 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
 	def __init__(self):
 	    self.obj = lib.TFIDF_New()
 
-	def preRun(self, stemFileIn, tfidfFileOut, threshold, stopWordFileInOut):
-	    lib.TFIDF_CreateStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, threshold, stopWordFileInOut)
+	def preRun(self, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFileInOut):
+	    lib.TFIDF_CreateStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFileInOut)
 
 	def run(self, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut):
 	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut)
 
     tfidf = TFIDF()
-    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, c_double(threshold), summaryStopWords)
+    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, c_double(thresholdUpper), c_double(thresholdBottom), c_uint(stopWordCountBottom), summaryStopWords)
 
     tfidf = TFIDF()
     tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords, dictionaryFile)
@@ -258,9 +272,6 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
     bashCommand = "wc -l summaryTfidfDictionary.txt"
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
-    #bashCommand = "cut -f 1 -d ' '"
-    #process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    #output = process.communicate()[0]
     print( "TFIDF resulted features size is %s " % (output) )
 
 ###############################################################################

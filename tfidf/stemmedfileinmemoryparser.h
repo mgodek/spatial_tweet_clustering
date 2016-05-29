@@ -17,7 +17,7 @@ public:
 
     void countTfidf();
 
-    void createStopWordList(double threshold, const char* stopWordFile);
+    void createStopWordList(double thresholdUpper, double thresholdBottom, unsigned int stopWordCountBottom, const char* stopWordFile);
 
     bool storeTfidfInFile(const char* tfidfFile, const char* dictFileName);
 
@@ -32,7 +32,7 @@ protected:
     double idf(size_t word);
 
     unsigned int _nextCoord;
-    std::unordered_map<unsigned int, std::string> _dictionary;
+    std::unordered_map<unsigned int, std::pair<std::string, unsigned int>> _dictionary;
     double minimalValue;
     double quant;
     std::unordered_map<size_t, unsigned int> _wordsToCoords;
@@ -58,13 +58,15 @@ extern "C" {
     void TFIDF_CreateStopWordList_Run( StemmedFileInMemoryParser* parser,
                                        const char* stemmedFile,
                                        const char* tfidfFile,
-                                       double      threshold,
+                                       double      thresholdUpper,
+                                       double      thresholdBottom,
+                                       unsigned int stopWordCountBottom,
                                        const char* stopWordFile )
     {
 	parser->loadData(stemmedFile, stopWordFile);
 	parser->countTfidf();
 
-        parser->createStopWordList(threshold, stopWordFile);
+        parser->createStopWordList(thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFile);
     }
 
     void TFIDF_UseStopWordList_Run( StemmedFileInMemoryParser* parser,
