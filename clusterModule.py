@@ -53,7 +53,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          clarax <- clara(matSp, k, samples=50)
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
          #all.equal(clarax[-8], clara(matSp, k, samples=50, pamLike = TRUE)[-8])
-         plot(clarax)
+         #plot(clarax)
 	 save(clarax,file=outputFile)
       }
     ''')

@@ -208,8 +208,8 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords):
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
 
-    threshold = c_double(1.1) #TODO ask user
-    sampleSize = 0.05 #TODO ask user for ratio
+    threshold = c_double(0.8) #TODO ask user
+    sampleSize = 0.2 #TODO ask user for ratio
     fIn = open(summaryStemmedTweets, 'r')
     lineCount = 0
     for line in fIn:
