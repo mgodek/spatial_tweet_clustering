@@ -249,7 +249,7 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
 	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut)
 
     tfidf = TFIDF()
-    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, threshold, summaryStopWords)
+    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, c_double(threshold), summaryStopWords)
 
     tfidf = TFIDF()
     tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords, dictionaryFile)

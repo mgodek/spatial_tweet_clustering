@@ -155,7 +155,7 @@ void StemmedFileInMemoryParser::countTfidf()
 
 void StemmedFileInMemoryParser::createStopWordList(double threshold, const char* stopWordFile)
 {
-    std::cout << __FUNCTION__ << std::endl;
+    std::cout << __FUNCTION__ << " threshold=" << threshold << std::endl;
     // list stop words
 
     std::set<unsigned int> toRemove;

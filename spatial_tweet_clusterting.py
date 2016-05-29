@@ -11,7 +11,6 @@ import numpy as np
 from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
-from ctypes import *
 
 pathToRawTweets        = "tweets"
 summaryParsedTweets    = "summaryParsedTweets.txt"
@@ -152,7 +151,7 @@ def transformTweetDataMenu():
     else:
         stemData(summaryParsedTweets, summaryStemmedTweets)
 
-    threshold = c_double(0.0005)
+    threshold = float(0.5)
     sampleRatio = 0.3
     if interactive == True:
         print ( "TFIDF stemmed data?" )
@@ -161,7 +160,7 @@ def transformTweetDataMenu():
             print ( "Specify threshold? default=%s" % str(threshold) )
             choice = raw_input(" >>  ")
             if choice != '':
-                threshold=c_double(choice)
+                threshold=float(choice)
 
             print ( "Specify sampleRatio? default=%s" % str(sampleRatio) )
             choice = raw_input(" >>  ")
