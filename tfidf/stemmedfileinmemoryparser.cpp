@@ -1,5 +1,6 @@
 #include "stemmedfileinmemoryparser.h"
 
+#include <set>
 #include <cmath>
 #include <cfloat>
 #include <fstream>
@@ -35,9 +36,25 @@ StemmedFileInMemoryParser::~StemmedFileInMemoryParser()
     }
 }
 
-bool StemmedFileInMemoryParser::loadData(const char* fileName)
+bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* stopWordFile)
 {
-    std::ifstream in(fileName, std::ios::in);
+    std::cout << __FUNCTION__ << std::endl;
+
+    std::ifstream stopWordFin(stopWordFile, std::ios::in);
+    std::set<std::string> stopWords;
+    if(stopWordFin.is_open())
+    {
+        std::cout << "Using stop word list" << std::endl;
+        while(!stopWordFin.eof())
+        {
+            std::string line;
+            std::getline(stopWordFin, line);
+            stopWords.insert(line);
+        }
+        std::cout << "Stop words list size: " << stopWords.size() << std::endl;
+    }
+
+    std::ifstream in(stemmedFile, std::ios::in);
     if(!in.is_open())
         return false;
     unsigned docNumber = 0;
@@ -61,11 +78,18 @@ bool StemmedFileInMemoryParser::loadData(const char* fileName)
             std::string word;
             inner >> word;
             ++lineLen;
+            if ( stopWords.find(word) != stopWords.end() )
+            {
+                // skip stopword
+                //std::cout << "Skipping " << word << std::endl;
+                continue;
+            }
+
             size_t hash = this->hash_fn(word);
             if(this->_wordsToCoords.count(hash) == 0)
             {
                 this->_wordsToCoords.insert({hash, _nextCoord++});
-                this->_dictionary.push_back(std::pair<unsigned int, std::string>(_nextCoord, word));
+                this->_dictionary[_nextCoord] = word;
             }
             if(doc->count(hash) == 0)
                 doc->insert({hash, 1});
@@ -112,6 +136,7 @@ double StemmedFileInMemoryParser::idf(size_t word)
 
 void StemmedFileInMemoryParser::countTfidf()
 {
+    std::cout << __FUNCTION__ << std::endl;
     for(auto wordPerDocPair : this->_wordsCountPerDocument)
     { // for all docs
         std::unordered_map<unsigned, double>* map = new std::unordered_map<unsigned, double>();
@@ -128,8 +153,41 @@ void StemmedFileInMemoryParser::countTfidf()
     this->quant = this->minimalValue / 4;
 }
 
+void StemmedFileInMemoryParser::createStopWordList(double threshold, const char* stopWordFile)
+{
+    std::cout << __FUNCTION__ << std::endl;
+    // list stop words
+
+    std::set<unsigned int> toRemove;
+    for( auto & results : this->tfIdfResults )
+    {
+        for(auto & pair : *results.second)
+        {
+            if(pair.second < threshold)
+            {
+                toRemove.insert(pair.first);
+            }
+        }
+    }
+
+    // save to remove words
+    std::ofstream outDict(stopWordFile, std::ios::trunc | std::ios::out);
+    if(outDict.is_open())
+    {
+        for(auto & entry : toRemove)
+        {
+            outDict << this->_dictionary[entry] << std::endl;
+        }
+
+        //outDict << std::ends;
+        outDict.flush();
+        outDict.close();
+    }
+}
+
 bool StemmedFileInMemoryParser::storeTfidfInFile(const char* fileName)
 {
+    std::cout << __FUNCTION__ << std::endl;
     std::ofstream out(fileName, std::ios::trunc | std::ios::out);
     if(!out.is_open())
         return false;

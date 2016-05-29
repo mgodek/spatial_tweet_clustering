@@ -13,11 +13,13 @@ public:
 
     virtual ~StemmedFileInMemoryParser();
 
-    bool loadData(const char* fileName);
+    bool loadData(const char* stemmedFile, const char* stopWordFile);
 
     void countTfidf();
 
-    bool storeTfidfInFile(const char* fileName);
+    void createStopWordList(double threshold, const char* stopWordFile);
+
+    bool storeTfidfInFile(const char* tfidfFile);
 
     // document index mapped to result for file
     typedef std::unordered_map<unsigned int, std::unordered_map<unsigned, double>*> TfIdfResults;
@@ -30,11 +32,10 @@ protected:
     double idf(size_t word);
 
     unsigned int _nextCoord;
-    std::list<std::pair<unsigned int, std::string>> _dictionary;
+    std::unordered_map<unsigned int, std::string> _dictionary;
     double minimalValue;
     double quant;
     std::unordered_map<size_t, unsigned int> _wordsToCoords;
-    std::unordered_map<unsigned int, size_t> _coordsToWords;
     std::unordered_map<size_t, unsigned int> _globalWordsCount;
     std::list<std::pair<unsigned int, std::string>> _docName;
     std::unordered_map<unsigned int, unsigned int> _docsLens;
@@ -54,11 +55,27 @@ extern "C" {
 	return new StemmedFileInMemoryParser();
     }
 
-    void TFIDF_Run( StemmedFileInMemoryParser* parser, const char* fileNameIn, const char* fileNameOut )
+    void TFIDF_CreateStopWordList_Run( StemmedFileInMemoryParser* parser,
+                                       const char* stemmedFile,
+                                       const char* tfidfFile,
+                                       double      threshold,
+                                       const char* stopWordFile )
     {
-	parser->loadData(fileNameIn);
+	parser->loadData(stemmedFile, stopWordFile);
 	parser->countTfidf();
-	parser->storeTfidfInFile(fileNameOut);
+
+        parser->createStopWordList(threshold, stopWordFile);
+    }
+
+    void TFIDF_UseStopWordList_Run( StemmedFileInMemoryParser* parser,
+                                    const char* stemmedFile,
+                                    const char* tfidfFile,
+                                    const char* stopWordFile )
+    {
+	parser->loadData(stemmedFile, stopWordFile);
+	parser->countTfidf();
+
+        parser->storeTfidfInFile(tfidfFile);
     }
 }
 
