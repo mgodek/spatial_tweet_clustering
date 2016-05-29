@@ -181,7 +181,7 @@ def transformTweetDataMenu():
             if choice != '':
                 stopWordCountBottom=int(choice)
 
-            print ( "Specify sampleRatio? default=%s" % str(sampleRatio) )
+            print ( "Specify sampleRatio? default=%s. Enter 1 to turn it off." % str(sampleRatio) )
             choice = raw_input(" >>  ")
             if choice != '':
                 sampleRatio=float(choice)

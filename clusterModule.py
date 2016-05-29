@@ -44,7 +44,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
       library(Matrix)
       library(cluster)
       function(tweetsMatrixFile, k, outputFile) {
-         coorMat <- read.table(tweetsMatrixFile)
+         coorMat <- read.table(tweetsMatrixFile) #'summaryClaraTweetsMatrixFile.txt'
 
          ###### FOR TESTING #########
          print( "NOTE!!! USING ONLY first 4k samples" )
@@ -55,7 +55,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          c <- as.numeric(t(coorMat[,2]))
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
-         clarax <- clara(matSp, k, samples=200, stand=TRUE, rngR=TRUE)
+         clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 5, sampsize = min(max(r), 40 + 2 * k), trace = 0, medoids.x = TRUE, rngR = FALSE)
 
          #plot(clarax)
          print(clarax)

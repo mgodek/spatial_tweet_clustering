@@ -161,7 +161,10 @@ void StemmedFileInMemoryParser::countTfidf()
     this->quant = this->minimalValue / 4;
 }
 
-void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper, double thresholdBottom, unsigned int stopWordCountBottom, const char* stopWordFile)
+void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper,
+                                                   double thresholdBottom,
+                                                   unsigned int stopWordCountBottom,
+                                                   const char* stopWordFile)
 {
     std::cout << __FUNCTION__ << " thresholdUpper:"  << thresholdUpper <<
                                  " thresholdBottom:" << thresholdBottom <<
