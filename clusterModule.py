@@ -45,11 +45,17 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
       library(cluster)
       function(tweetsMatrixFile, k, outputFile) {
          coorMat <- read.table(tweetsMatrixFile)
+
+         ###### FOR TESTING #########
+         print( "NOTE!!! USING ONLY first 4k samples" )
+         coorMat <- coorMat[1:4000,] #TODO comment out: reduce size for test
+         ###### FOR TESTING #########
+
          r <- as.numeric(t(coorMat[,1]))
          c <- as.numeric(t(coorMat[,2]))
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
-         clarax <- clara(matSp, k, samples=200, sampsize=max(r)/100, stand=TRUE, rngR=TRUE)
+         clarax <- clara(matSp, k, samples=200, stand=TRUE, rngR=TRUE)
          ## using pamLike=TRUE  gives the same (apart from the 'call'):
          #all.equal(clarax[-8], clara(matSp, k, samples=50, pamLike = TRUE)[-8])
          #plot(clarax)

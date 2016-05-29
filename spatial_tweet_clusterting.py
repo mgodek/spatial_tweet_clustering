@@ -160,20 +160,26 @@ def transformTweetDataMenu():
 
     thresholdBottom = float(0.4)
     thresholdUpper  = float(0.9)
+    stopWordCountBottom = 8
     sampleRatio = 0.3
     if interactive == True:
         print ( "TFIDF stemmed data?" )
         choice = raw_input(" >>  ")
         if choice == 'y':
-            print ( "Specify threshold bottom? default=%s" % str(thresholdBottom) )
+            print ( "Specify threshold bottom? default=%s. Enter 0 to turn it off." % str(thresholdBottom) )
             choice = raw_input(" >>  ")
             if choice != '':
                 thresholdBottom=float(choice)
 
-            print ( "Specify threshold upper? default=%s" % str(thresholdUpper) )
+            print ( "Specify threshold upper? default=%s. Enter 10 to turn it off." % str(thresholdUpper) )
             choice = raw_input(" >>  ")
             if choice != '':
                 thresholdUpper=float(choice)
+
+            print ( "Specify stopWordCount bottom? default=%d. Enter 0 to turn it off." % stopWordCountBottom )
+            choice = raw_input(" >>  ")
+            if choice != '':
+                stopWordCountBottom=int(choice)
 
             print ( "Specify sampleRatio? default=%s" % str(sampleRatio) )
             choice = raw_input(" >>  ")
@@ -181,10 +187,12 @@ def transformTweetDataMenu():
                 sampleRatio=float(choice)
 
             tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-                      summaryDictionaryFile, thresholdUpper, thresholdBottom, sampleRatio)
+                      summaryDictionaryFile, thresholdUpper, thresholdBottom,
+                      stopWordCountBottom, sampleRatio)
     else:
             tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-                      summaryDictionaryFile, thresholdUpper, thresholdBottom, sampleRatio)
+                      summaryDictionaryFile, thresholdUpper, thresholdBottom,
+                      stopWordCountBottom, sampleRatio)
 
     if interactive == True:
         print ( "Make matrix? y/n" )

@@ -204,7 +204,7 @@ def stemData(summaryParsedTweets, summaryStemmedTweets):
 ###############################################################################
 
 def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-              dictionaryFile, thresholdUpper, thresholdBottom, sampleRatio):
+              dictionaryFile, thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio):
     print( "TFIDFing stemmed data..." )
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
@@ -242,14 +242,14 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
 	def __init__(self):
 	    self.obj = lib.TFIDF_New()
 
-	def preRun(self, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordFileInOut):
-	    lib.TFIDF_CreateStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordFileInOut)
+	def preRun(self, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFileInOut):
+	    lib.TFIDF_CreateStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFileInOut)
 
 	def run(self, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut):
 	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut)
 
     tfidf = TFIDF()
-    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, c_double(thresholdUpper), c_double(thresholdBottom), summaryStopWords)
+    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, c_double(thresholdUpper), c_double(thresholdBottom), c_uint(stopWordCountBottom), summaryStopWords)
 
     tfidf = TFIDF()
     tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords, dictionaryFile)

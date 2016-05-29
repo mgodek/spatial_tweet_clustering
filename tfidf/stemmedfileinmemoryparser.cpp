@@ -1,5 +1,7 @@
 #include "stemmedfileinmemoryparser.h"
 
+#include <locale>
+#include <algorithm>
 #include <set>
 #include <cmath>
 #include <cfloat>
@@ -49,7 +51,7 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
         {
             std::string line;
             std::getline(stopWordFin, line);
-            stopWords.insert(line);
+            stopWords.insert(line.substr(0,line.find_first_of(' '))); // skip everything after first space
         }
         std::cout << "Stop words list size: " << stopWords.size() << std::endl;
     }
@@ -77,6 +79,7 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
         {
             std::string word;
             inner >> word;
+            word.erase(std::remove_if(word.begin(), word.end(), ::isspace), word.end());
             ++lineLen;
             if ( stopWords.find(word) != stopWords.end() )
             {
@@ -89,8 +92,13 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
             if(this->_wordsToCoords.count(hash) == 0)
             {
                 this->_wordsToCoords.insert({hash, _nextCoord++});
-                this->_dictionary[_nextCoord] = word;
+                this->_dictionary[_nextCoord] = std::pair<std::string, unsigned int>(word,1);
             }
+            else
+            {
+                this->_dictionary[_nextCoord].second++; // increase count
+            }
+
             if(doc->count(hash) == 0)
                 doc->insert({hash, 1});
             else
@@ -153,9 +161,11 @@ void StemmedFileInMemoryParser::countTfidf()
     this->quant = this->minimalValue / 4;
 }
 
-void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper, double thresholdBottom, const char* stopWordFile)
+void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper, double thresholdBottom, unsigned int stopWordCountBottom, const char* stopWordFile)
 {
-    std::cout << __FUNCTION__ << std::endl;
+    std::cout << __FUNCTION__ << " thresholdUpper:"  << thresholdUpper <<
+                                 " thresholdBottom:" << thresholdBottom <<
+                                 " stopWordCountBottom:" << stopWordCountBottom << std::endl;
 
     // list stop words
     std::set<unsigned int> toRemove;
@@ -168,6 +178,12 @@ void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper, double
             {
                 toRemove.insert(pair.first);
             }
+
+            if ( this->_dictionary[pair.first].second < stopWordCountBottom )
+                 // TODO needed? this->_dictionary[pair.first].second > 100 )
+            {
+                toRemove.insert(pair.first);
+            }
         }
     }
 
@@ -177,7 +193,7 @@ void StemmedFileInMemoryParser::createStopWordList(double thresholdUpper, double
     {
         for(auto & entry : toRemove)
         {
-            outDict << this->_dictionary[entry] << std::endl;
+            outDict << this->_dictionary[entry].first << " : " << this->_dictionary[entry].second << std::endl;
         }
 
         //outDict << std::ends;
@@ -216,7 +232,7 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* tfidfFileName, cons
     {
         for(auto & entry : this->_dictionary)
         {
-            outDict << entry.first << " : " << entry.second << std::endl;
+            outDict << entry.first << " : " << entry.second.first << " : " << entry.second.second << std::endl;
         }
 
         //outDict << std::ends;
