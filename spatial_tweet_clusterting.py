@@ -142,16 +142,22 @@ def transformTweetDataMenu():
 
     global interactive
 
-    if interactive == True:
-        print ( "Parse raw data? y/n" )
-        choice = raw_input(" >>  ")
-        if choice == 'y':
-             parseData(pathToRawTweets, summaryParsedTweets)
-    else:
-        parseData(pathToRawTweets, summaryParsedTweets)
+    onlySpdbData = False
 
     if interactive == True:
-        print ( "Stem parsed data? y/n" )
+        print ( "Parse raw data? y/n. Default n." )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            print ( "Use only location data? y/n. Default n." )
+            choice = raw_input(" >>  ")
+            if choice == 'y':
+                 onlySpdbData = True
+            parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
+    else:
+        parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
+
+    if interactive == True:
+        print ( "Stem parsed data? y/n. Default n." )
         choice = raw_input(" >>  ")
         if choice == 'y':
             stemData(summaryParsedTweets, summaryStemmedTweets)
@@ -163,7 +169,7 @@ def transformTweetDataMenu():
     stopWordCountBottom = 8
     sampleRatio = 0.3
     if interactive == True:
-        print ( "TFIDF stemmed data?" )
+        print ( "TFIDF stemmed data? y/n. Default n." )
         choice = raw_input(" >>  ")
         if choice == 'y':
             print ( "Specify threshold bottom? default=%s. Enter 0 to turn it off." % str(thresholdBottom) )
@@ -195,7 +201,7 @@ def transformTweetDataMenu():
                       stopWordCountBottom, sampleRatio)
 
     if interactive == True:
-        print ( "Make matrix? y/n" )
+        print ( "Make matrix? y/n. Default n." )
         choice = raw_input(" >>  ")
         if choice == 'y':
             makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   

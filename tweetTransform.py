@@ -153,7 +153,7 @@ def tweetDecoder(obj):
 
 ###############################################################################
 
-def parseData(pathToRawTweets, summaryParsedTweets):
+def parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets):
     print( "Parsing raw data..." )
         
     removeFile(summaryParsedTweets)
@@ -193,6 +193,9 @@ def parseData(pathToRawTweets, summaryParsedTweets):
 
         # discard unicode specific characters
         tweetForStemClean = ''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])
+
+        if onlySpdbData == True:
+            tweetForStemClean = ' '.join(word for word in tweetForStemClean.split(' ') if word.startswith('spdb'))
 
         summaryfile.write(file+" "+tweetForStemClean+'\n')
 
