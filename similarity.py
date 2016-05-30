@@ -6,7 +6,7 @@ import numpy as np
 
 ###############################################################################
 
-def similarityCoord(summaryParsedCoord, summarySimilarityCoord): # TODO implement in C for speed
+def similarityCoord(summaryParsedCoord, summarySimilarityCoord):
     print( "Counting distances of coords..." )
     removeFile(summarySimilarityCoord)
 

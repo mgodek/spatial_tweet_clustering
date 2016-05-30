@@ -53,7 +53,7 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
         while(!stopWordFin.eof())
         {
             std::string line;
-            std::getline(stopWordFin, line);
+            std::getline(stopWordFin, line); // TODO remove SPDB data from stopwords
             stopWords.insert(line.substr(0,line.find_first_of(' '))); // skip everything after first space
         }
         std::cout << "Stop words list size: " << stopWords.size() << std::endl;
@@ -94,12 +94,13 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
             size_t hash = this->hash_fn(word);
             if(this->_wordsToCoords.count(hash) == 0)
             {
-                this->_wordsToCoords.insert({hash, _nextCoord++});
+                this->_wordsToCoords.insert({hash, _nextCoord});
                 this->_dictionary[_nextCoord] = std::pair<std::string, unsigned int>(word,1);
+                _nextCoord++;
             }
             else
             {
-                this->_dictionary[_nextCoord].second++; // increase count
+                this->_dictionary[this->_wordsToCoords[hash]].second++; // increase count
             }
 
             if(doc->count(hash) == 0)
@@ -300,7 +301,7 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
     in.close();
 
     // rowId to columnId-distance
-    std::vector<std::vector<int>> distanceV(rowCount, std::vector<int>(rowCount,0));
+    std::vector<std::vector<float>> distanceV(rowCount, std::vector<float>(rowCount,0));
 
     auto a = [&](int start, int end)
     {
@@ -319,7 +320,7 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
                 const int y = latitudeV[r] - latitudeV[c];
 
                 // calculating Euclidean distance
-                int distance = pow(x, 2) + pow(y, 2);
+                float distance = pow(x, 2) + pow(y, 2);
 	        distance = sqrt(distance);
 
                 distanceV[r][c] = distance;
@@ -365,7 +366,7 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
         for ( int c = 0; c < rowCount-r; c++ )
         {
             // Change from distance to similarity: 1 - x/max. same will have 1 value. distant will have 0
-            distanceV[rowCount-r-1][rowCount-c-1] = 100*(1 - distanceV[r][c]/10); // TODO max element too big
+            distanceV[rowCount-r-1][rowCount-c-1] = (1 - distanceV[r][c]/maxElement); // TODO max element too big
         }
     }
 

@@ -58,7 +58,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 5, sampsize = min(max(r), 40 + 2 * k), trace = 0, medoids.x = TRUE, rngR = FALSE)
 
          #plot(clarax)
-         print(clarax)
+         #print(clarax)
 	 save(clarax,file=outputFile)
       }
     ''')
