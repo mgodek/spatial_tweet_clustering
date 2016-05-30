@@ -348,11 +348,7 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
     fifth.join();
     sixth.join();
 
-    // removeFile(summarySimilarityCoord) in caller
-    std::ofstream out(similarityCoordsFile, std::ios::trunc | std::ios::out);
-    if(!out.is_open())
-        return;
-
+    std::cout << std::endl << "Find max distance..." << std::endl;
     int maxElement = 0;
     for ( auto & entry : distanceV )
     {
@@ -360,29 +356,35 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
         maxElement = (tempMax > maxElement ? tempMax : maxElement);
     }
 
+    std::cout << "Counting similartiy from distances... based on max=" << maxElement << std::endl;
     // rowId to columnId-similarity
-    std::vector<std::vector<double>> similarityV(rowCount, std::vector<double>(rowCount,0x0));
+    //std::vector<std::vector<int>> similarityV(rowCount, std::vector<int>(rowCount,0x0));
 
-    std::cout << "Counting similartiy from distances..." << std::endl;
     for (int r = 0; r < rowCount; r++ )
     {
         for ( int c = 0; c < rowCount-r; c++ )
         {
             // Change from distance to similarity: 1 - x/max. same will have 1 value. distant will have 0
-            similarityV[r][c] = 1 - distanceV[r][c]/maxElement;
+            distanceV[rowCount-r-1][rowCount-c-1] = 100*(1 - distanceV[r][c]/10); // TODO max element too big
         }
     }
 
     std::cout << "Saving results to file..." << std::endl;
+    // removeFile(summarySimilarityCoord) in caller
+    std::ofstream out(similarityCoordsFile, std::ios::trunc | std::ios::out);
+    if(!out.is_open())
+        return;
+
     for (int r = 0; r < rowCount; r++ )
     {
+        std::ostringstream oss;
         for ( int c = 0; c < rowCount-r; c++ )
         {
-            out << r << " " << c << " " << distanceV[r][c] << " " << similarityV[r][c] << std::endl;
+            oss << r << " " << c << " " << distanceV[r][c] << " " << distanceV[rowCount-r-1][rowCount-c-1] << std::endl;
         }
+        out << oss.str();
     }
 
     out.flush();
     out.close();
-    std::cout << std::endl;
 }
