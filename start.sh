@@ -36,10 +36,8 @@ cmake ../libstemmer_c
 make
 cd ..
 
-mkdir tweetsStemmed
-
 FILE="tweets.tar.gz"
-
+echo "Now manually create a directory named 'tweets' in which will be *.json tweets"
 #if [ -f $FILE ];
 #then
 #    rm -rf tweets/*

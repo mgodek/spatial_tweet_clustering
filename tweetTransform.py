@@ -30,8 +30,8 @@ class TweetsCoordinates:
         if isValid == True:
             if 'coordinates' in obj :
                 coor = obj['coordinates']
-		self.longitude = round((int(coor[0][0][0]) + 180)+5)
-		self.latitude = round((int(coor[0][0][1])  + 90)+5)
+		self.longitude = int(coor[0][0][0]) + 180
+		self.latitude = int(coor[0][0][1])  + 90
             else:
 		self.isValid = False
 		print ('TweetsCoordinates fail: coordinates are wrong')
@@ -39,9 +39,9 @@ class TweetsCoordinates:
 		#raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
 
     def toString(self):
-        summary  = "spdbcoord"+str(self.longitude)
+        summary  = "spdbcoordlong"+str(self.longitude)
         summary += " "
-        summary += "spdbcoord"+str(self.latitude)
+        summary += "spdbcoordlat"+str(self.latitude)
         return summary
 
 ###############################################################################
@@ -271,6 +271,7 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
     tfidf = TFIDF()
     tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords, dictionaryFile)
     
+    removeFile(stemFileReduced)
 
     bashCommand = "wc -l summaryTfidfDictionary.txt"
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
