@@ -80,6 +80,9 @@ extern "C" {
 
         parser->storeTfidfInFile(tfidfFile, dictFile);
     }
+
+    void CountCoordinateSimilarity( const char* parsedCoordsFile,
+                                    const char* similarityCoordsFile );
 }
 
 #endif // STEMMEDFILEINMEMORYPARSER_H

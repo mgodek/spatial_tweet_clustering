@@ -10,6 +10,9 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cstdlib>
+#include <thread>
+#include <chrono>
 
 //#include <QMap>
 /// We don't care for DBL_MIN, so quantization has to be at 2*DBL_MIN,
@@ -244,4 +247,142 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* tfidfFileName, cons
     }
 
     return true;
+}
+
+void CountCoordinateSimilarity( const char* parsedCoordsFile,
+                                const char* similarityCoordsFile )
+{
+    std::cout << __FUNCTION__ << std::endl;
+
+    std::ifstream in1(parsedCoordsFile, std::ios::in);
+    if(!in1.is_open())
+        return;
+
+    int rowCount=0;
+    while(!in1.eof())
+    {
+        std::string line;
+        std::getline(in1, line);
+        rowCount++;
+    }
+    in1.close();
+
+    std::vector<int> longitudeV(rowCount, 0x00);
+    std::vector<int> latitudeV(rowCount, 0x00);
+    std::vector<std::string> fileIdV(rowCount, "");
+
+    std::ifstream in(parsedCoordsFile, std::ios::in);
+    if(!in.is_open())
+        return;
+    int rowIndex = 0;
+    while(!in.eof())
+    {
+        std::string line;
+        std::getline(in, line);
+        std::stringstream inner(std::ios::in);
+        inner.str(line);
+        inner.seekg(0, std::ios_base::beg);
+
+        // first word is a fileId
+        std::string fileId;
+	inner >> fileId;
+        fileIdV[rowIndex] = fileId;
+
+        std::string longitude, latitude;
+        inner >> longitude;
+        inner >> latitude;
+
+        longitudeV[rowIndex] = atoi(longitude.c_str());
+        latitudeV[rowIndex] = atoi(latitude.c_str());
+
+        rowIndex++;
+    }
+    in.close();
+
+    // rowId to columnId-distance
+    std::vector<std::vector<int>> distanceV(rowCount, std::vector<int>(rowCount,0));
+
+    auto a = [&](int start, int end)
+    {
+        std::cout << "thread start:" << start << " end:" << end << std::endl;
+        // iterate rows and columns of distance matrix
+        for (int r = start; r < end; r++)
+        {//(int)(100*(r/rowCount)) TODO %
+            if (start == 0)
+            {
+                std::cout << "\r" << 6*r << "/"<< rowCount << " completed.       " << std::flush;
+            }
+
+            for (int c = 0; c < rowCount-r; c++)
+            {
+                const int x = longitudeV[r] - longitudeV[c];
+                const int y = latitudeV[r] - latitudeV[c];
+
+                // calculating Euclidean distance
+                int distance = pow(x, 2) + pow(y, 2);
+	        distance = sqrt(distance);
+
+                distanceV[r][c] = distance;
+            
+                //std::cout << "distance " << r << "(" << longitudeV[r] << " " << latitudeV[r] << ") " << ":" << c << "(" << longitudeV[c] << " " << latitudeV[c] << ") " << distance << std::endl;
+            }
+        }
+    };
+   
+    std::thread second(a, 1*(rowCount/6)+1, 2*(rowCount/6));
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    std::thread third(a,  2*(rowCount/6)+1, 3*(rowCount/6));
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    std::thread fourth(a, 3*(rowCount/6)+1, 4*(rowCount/6));
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    std::thread fifth(a,  4*(rowCount/6)+1, 5*(rowCount/6));
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    std::thread sixth(a,  5*(rowCount/6)+1,    rowCount);
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    std::thread first(a,  0,                   rowCount/6);
+
+    first.join();
+    second.join();
+    third.join();
+    fourth.join();
+    fifth.join();
+    sixth.join();
+
+    // removeFile(summarySimilarityCoord) in caller
+    std::ofstream out(similarityCoordsFile, std::ios::trunc | std::ios::out);
+    if(!out.is_open())
+        return;
+
+    int maxElement = 0;
+    for ( auto & entry : distanceV )
+    {
+	const int tempMax = std::distance(entry.begin(), std::max_element(entry.begin(), entry.end()));
+        maxElement = (tempMax > maxElement ? tempMax : maxElement);
+    }
+
+    // rowId to columnId-similarity
+    std::vector<std::vector<double>> similarityV(rowCount, std::vector<double>(rowCount,0x0));
+
+    std::cout << "Counting similartiy from distances..." << std::endl;
+    for (int r = 0; r < rowCount; r++ )
+    {
+        for ( int c = 0; c < rowCount-r; c++ )
+        {
+            // Change from distance to similarity: 1 - x/max. same will have 1 value. distant will have 0
+            similarityV[r][c] = 1 - distanceV[r][c]/maxElement;
+        }
+    }
+
+    std::cout << "Saving results to file..." << std::endl;
+    for (int r = 0; r < rowCount; r++ )
+    {
+        for ( int c = 0; c < rowCount-r; c++ )
+        {
+            out << r << " " << c << " " << distanceV[r][c] << " " << similarityV[r][c] << std::endl;
+        }
+    }
+
+    out.flush();
+    out.close();
+    std::cout << std::endl;
 }
