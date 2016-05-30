@@ -8,6 +8,7 @@ import tweetFetcher
 import clusterModule
 import tweetTransform
 import numpy as np
+from clusterView import displayResultsOnMap
 from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
@@ -111,8 +112,8 @@ def fetchTweetsMenu():
 ###############################################################################
  
 def fetchTweetsPeriodicallyMenu():
-    amount = 5000
-    hours = 2
+    amount = 20000
+    hours = 1
     times = 12
     print ("Fetching ", amount, " tweets periodically every ", hours, " hours!")
     strftime("%Y-%m-%d %H:%M:%S", gmtime())
@@ -258,8 +259,9 @@ def clusterTweetsLessNaiveMenu():
 def viewResultsMenu():
     print ("Viewing results !")
 
-    clusterResults(clusterNaiveResultFile)
-    clusterResults(clusterLessNResultFile)
+    displayResultsOnMap()
+#    clusterResults(clusterNaiveResultFile)
+#    clusterResults(clusterLessNResultFile)
 
     print ("9. Back")
     print ("0. Quit")
