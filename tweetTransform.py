@@ -113,7 +113,7 @@ class TweetForClustering:
             # decode userObj
             try:
                 obj_iterator = iter(userObj)
-                self.userLocation = str(userObj['location']).replace(" ", "")
+                self.userLocation = ' '.join(str(userObj['location']).replace(" ", "").split())
             except:
                 self.isValid = False
                 print( 'userObj is not iterable' )
@@ -313,5 +313,32 @@ def makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
 
     return
 
-############################################################################### 
+###############################################################################
 
+def extractCoord(summaryParsedTweets, summaryParsedCoord):
+    print( "Extracting coordinate data..." )
+    removeFile(summaryParsedCoord)
+
+    fOut = open(summaryParsedCoord, 'w')
+    fIn = open(summaryParsedTweets, 'r')
+
+    for line in fIn:
+        #get json name
+        id_str_json = line.split(' ', 1)[0]
+        #print( "id_str_json=%s line=%s" % (id_str_json,line) )
+
+        coordStart = line.find('spdbcoordlong') + len('spdbcoordlong') #TODO use value from class
+        coordEnd = line.find(' ', coordStart)
+        longitude = int(line[coordStart:coordEnd])-180
+
+        coordStart = line.find('spdbcoordlat') + len('spdbcoordlat') #TODO use value from class
+        coordEnd = line.find(' ', coordStart)
+        latitude = int(line[coordStart:coordEnd])-90
+        #print( "id_str_json=%s longitude=%d latitude=%d" % (id_str_json,longitude,latitude) )
+
+        fOut.write(id_str_json+' '+str(longitude)+' '+str(latitude)+'\n')
+
+    fIn.close()
+    fOut.close()
+
+############################################################################### 

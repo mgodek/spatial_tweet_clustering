@@ -9,12 +9,15 @@ import clusterModule
 import tweetTransform
 import numpy as np
 from clusterView import displayResultsOnMap
-from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, removeFile
+from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, extractCoord, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
+from similarity import similarityCoord
 
 pathToRawTweets        = "tweets"
-summaryParsedTweets    = "summaryParsedTweets.txt"
+summarySimilarityCoord = 'summarySimilarityCoord.txt'
+summaryParsedCoord     = 'summaryParsedCoord.txt'
+summaryParsedTweets    = 'summaryParsedTweets.txt'
 summaryStemmedTweets   = 'summaryStemmedTweets.txt'
 summaryTfidfTweets     = 'summaryTfidfTweets.txt'
 summaryStopWords       = 'summaryTfidfStopWords.txt'
@@ -156,6 +159,8 @@ def transformTweetDataMenu():
             parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
     else:
         parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
+
+    extractCoord(summaryParsedTweets, summaryParsedCoord)
 
     if interactive == True:
         print ( "Stem parsed data? y/n. Default n." )
