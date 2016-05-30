@@ -160,7 +160,15 @@ def transformTweetDataMenu():
     else:
         parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
 
-    extractCoord(summaryParsedTweets, summaryParsedCoord)
+    if interactive == True:
+        print ( "Calculate distances of tweets? y/n. Default n." )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            extractCoord(summaryParsedTweets, summaryParsedCoord)
+            similarityCoord(summaryParsedCoord, summarySimilarityCoord)
+    else:
+        extractCoord(summaryParsedTweets, summaryParsedCoord)
+        similarityCoord(summaryParsedCoord, summarySimilarityCoord)
 
     if interactive == True:
         print ( "Stem parsed data? y/n. Default n." )
