@@ -78,7 +78,7 @@ def displayResultsOnMap(summaryParsedCoord, clusterResult):
 
     colorsArray = ["bo", "ro", "go", "yo", "wo", "mo", "kx"]
 
-    for i in range(1, noGroups):
+    for i in range(1, noGroups+1):
         # get tweets indx for give group id
         subGroup = clusterV[clusterV[:,1] == i]
         # filter coord mat based on tweets ids from above line
@@ -87,7 +87,7 @@ def displayResultsOnMap(summaryParsedCoord, clusterResult):
         xpt,ypt = m(subCoordMat[:,2],subCoordMat[:,1])
         # convert back to lat/lon
         lonpt, latpt = m(xpt,ypt,inverse=True)
-        m.plot(xpt,ypt,colorsArray[i])  # plot a blue dot there
+        m.plot(xpt,ypt,colorsArray[i-1])  # plot a blue dot there
 
     #m.plot(xpt-100000,ypt-100000,'ro')  # plot a red dot there
     # put some text next to the dot, offset a little bit
