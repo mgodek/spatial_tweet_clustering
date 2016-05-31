@@ -57,8 +57,8 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
          clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 0, medoids.x = TRUE, rngR = FALSE)
 
-         print(clarax[4]) # TODO we need to save this vector. next line crashes :/
-	 #write(clarax[4],file=outputFile,sep = " ")
+         #print(clarax[4])
+	 write.table(clarax[4],file=outputFile,sep = " ")
          plot(clarax)
          print(clarax)
       }

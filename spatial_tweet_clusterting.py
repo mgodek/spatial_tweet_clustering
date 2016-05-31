@@ -271,9 +271,7 @@ def clusterTweetsLessNaiveMenu():
 def viewResultsMenu():
     print ("Viewing results !")
 
-    displayResultsOnMap(summaryParsedCoord)
-#    clusterResults(clusterNaiveResultFile)
-#    clusterResults(clusterLessNResultFile)
+    displayResultsOnMap(summaryParsedCoord, clusterLessNResultFile)
 
     print ("9. Back")
     print ("0. Quit")

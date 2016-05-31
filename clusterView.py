@@ -8,10 +8,10 @@ from numpy import ndarray
 
 ###############################################################################
 
-def displayResultsOnMap(summaryParsedCoord):
+def displayResultsOnMap(summaryParsedCoord, clusterResult):
     print( "displayResultsOnMap" )
 
-    europeBB=[-31.266001, 27.636311, 39.869301, 81.008797]
+    #europeBB=[-31.266001, 27.636311, 39.869301, 81.008797]
     # setup stereographic basemap.
     # lat_ts is latitude of true scale.
     # lon_0,lat_0 is central point.
@@ -41,27 +41,53 @@ def displayResultsOnMap(summaryParsedCoord):
     fIn.close()
     fIn = open(summaryParsedCoord, 'r')
 
-    coordMat = ndarray((rowCount,2),int)
+    coordMat = ndarray((rowCount,3),int)
     rowIndex = 0
     for line in fIn:
+        coordMat[rowIndex, 0] = rowIndex
         #id_str_json = line.split(' ', 1)[0]
         longitude = int(line.split(' ', 2)[1])
         latitude = int(line.split(' ', 2)[2])
         #print( "id_str_json=%s longitude=%d latit11ude=%d" % (id_str_json,longitude,latitude) )
-        coordMat[rowIndex, 0] = latitude
-        coordMat[rowIndex, 1] = longitude
+        coordMat[rowIndex, 1] = latitude
+        coordMat[rowIndex, 2] = longitude
 
         rowIndex = rowIndex + 1
     ############## read coordinates #################
+
+    ############## read cluster results #################
+    fCluster = open(clusterResult, 'r')
+
+    clusterV = ndarray((rowCount,2),int)
+    fCluster.readline() # ignore first line
+    rowIndex = 0
+    for line in fCluster:
+        clusterV[rowIndex][0]=rowIndex
+        clusterV[rowIndex][1]=int(line.split(' ', 1)[1])
+        rowIndex = rowIndex + 1
+    fCluster.close()
+    ############## read cluster results #################
 
     #lon, lat = 21, 52 # Location of Waw
     # convert to map projection coords.
     # Note that lon,lat can be scalars, lists or numpy arrays.
     #xpt,ypt = m(lon,lat)
-    xpt,ypt = m(coordMat[:,1],coordMat[:,0])
-    # convert back to lat/lon
-    lonpt, latpt = m(xpt,ypt,inverse=True)
-    m.plot(xpt,ypt,'bo')  # plot a blue dot there
+
+    noGroups = np.amax(clusterV[:,1])
+    print( "noGroups=%d" % noGroups )
+
+    colorsArray = ["bo", "ro", "go", "yo", "wo", "mo", "kx"]
+
+    for i in range(1, noGroups):
+        # get tweets indx for give group id
+        subGroup = clusterV[clusterV[:,1] == i]
+        # filter coord mat based on tweets ids from above line
+        subCoordMat = coordMat[subGroup[:,0]]
+
+        xpt,ypt = m(subCoordMat[:,2],subCoordMat[:,1])
+        # convert back to lat/lon
+        lonpt, latpt = m(xpt,ypt,inverse=True)
+        m.plot(xpt,ypt,colorsArray[i])  # plot a blue dot there
 
     #m.plot(xpt-100000,ypt-100000,'ro')  # plot a red dot there
     # put some text next to the dot, offset a little bit
