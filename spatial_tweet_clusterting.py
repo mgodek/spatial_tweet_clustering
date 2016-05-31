@@ -36,7 +36,7 @@ def signal_handler(signal, frame):
 ###############################################################################
 
 def main_menu():
-    os.system('clear')
+    #os.system('clear')
     
     print ("Please choose the function you want to start:")
     print ("1. Run setup")
@@ -158,6 +158,12 @@ def parseTweetDataMenu():
 
     stemData(summaryParsedTweets, summaryStemmedTweets)
 
+    print ("9. Back")
+    print ("0. Quit")
+    choice = raw_input(" >>  ")
+    exec_menu(choice)
+    return
+
 ###############################################################################
 
 def tfIdfTweetDataMenu():
@@ -170,36 +176,30 @@ def tfIdfTweetDataMenu():
     stopWordCountBottom = 17
     sampleRatio = 0.3
     if interactive == True:
-        print ( "TFIDF stemmed data? y/n. Default n." )
+        print ( "Specify threshold bottom? default=%s. Enter 0 to turn it off." % str(thresholdBottom) )
         choice = raw_input(" >>  ")
-        if choice == 'y':
-            print ( "Specify threshold bottom? default=%s. Enter 0 to turn it off." % str(thresholdBottom) )
-            choice = raw_input(" >>  ")
-            if choice != '':
-                thresholdBottom=float(choice)
+        if choice != '':
+            thresholdBottom=float(choice)
 
-            print ( "Specify threshold upper? default=%s. Enter 100 to turn it off." % str(thresholdUpper) )
-            choice = raw_input(" >>  ")
-            if choice != '':
-                thresholdUpper=float(choice)
+        print ( "Specify threshold upper? default=%s. Enter 100 to turn it off." % str(thresholdUpper) )
+        choice = raw_input(" >>  ")
+        if choice != '':
+            thresholdUpper=float(choice)
 
-            print ( "Specify stopWordCount bottom? default=%d. Enter 0 to turn it off." % stopWordCountBottom )
-            choice = raw_input(" >>  ")
-            if choice != '':
-                stopWordCountBottom=int(choice)
+        print ( "Specify stopWordCount bottom? default=%d. Enter 0 to turn it off." % stopWordCountBottom )
+        choice = raw_input(" >>  ")
+        if choice != '':
+            stopWordCountBottom=int(choice)
 
-            print ( "Specify sampleRatio? default=%s. Enter 1 to turn it off." % str(sampleRatio) )
-            choice = raw_input(" >>  ")
-            if choice != '':
-                sampleRatio=float(choice)
+        print ( "Specify sampleRatio? default=%s. Enter 1 to turn it off." % str(sampleRatio) )
+        choice = raw_input(" >>  ")
+        if choice != '':
+            sampleRatio=float(choice)
 
-            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-                      summaryDictionaryFile, thresholdUpper, thresholdBottom,
-                      stopWordCountBottom, sampleRatio)
-    else:
-            tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-                      summaryDictionaryFile, thresholdUpper, thresholdBottom,
-                      stopWordCountBottom, sampleRatio)
+
+    tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+              summaryDictionaryFile, thresholdUpper, thresholdBottom,
+              stopWordCountBottom, sampleRatio)
 
     print ("9. Back")
     print ("0. Quit")
@@ -258,7 +258,7 @@ def clusterTweetsLessNaiveMenu():
     except ValueError:
         k = 7
 
-    clusterClara(summaryParsedCoord, k, clusterLessNResultFile)
+    clusterClara(tweetsMatrixFile, k, clusterLessNResultFile)
 
     print ("9. Back")
     print ("0. Quit")

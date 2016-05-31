@@ -326,19 +326,15 @@ def makeCoordMatrixFile(summaryParsedCoord, tweetsMatrixFile):
         line = line.split(' ', 1)[1]
 
         #split to index:value pairs
-        coordCollection = line.split(' ')
+        coordCollection = line.split(' ', 1)
 
         #matrixEntries: each value is given in quadriple (row coordinate, column coordinate, value)
 
-        for entry in coordCollection:
-            if entry.strip() == '':
-                continue
-            #print( "entry'%s'" % entry )
-            pair = entry.split(' ')
-            longitude = int(pair[0])
-            latitude = int(pair[1])
-            matrixfile.write(str(rowIndex)+' '+'1'+' '+str(longitude)+'\n')
-            matrixfile.write(str(rowIndex)+' '+'2'+' '+str(latitude)+'\n')
+        #print( "entry'%s'" % coordCollection )
+        longitude = int(coordCollection[0])
+        latitude = int(coordCollection[1])
+        matrixfile.write(str(rowIndex)+' '+'1'+' '+str(longitude)+'\n')
+        matrixfile.write(str(rowIndex)+' '+'2'+' '+str(latitude)+'\n')
 
         rowIndex = rowIndex + 1
     
@@ -360,11 +356,11 @@ def extractCoord(summaryParsedTweets, summaryParsedCoord):
         id_str_json = line.split(' ', 1)[0]
         #print( "id_str_json=%s line=%s" % (id_str_json,line) )
 
-        coordStart = line.find('spdbcoordlong') + len('spdbcoordlong') #TODO use value from class
+        coordStart = line.find('spdbcoordlong') + len('spdbcoordlong') # useing value from Tweet class
         coordEnd = line.find(' ', coordStart)
         longitude = int(line[coordStart:coordEnd])-180
 
-        coordStart = line.find('spdbcoordlat') + len('spdbcoordlat') #TODO use value from class
+        coordStart = line.find('spdbcoordlat') + len('spdbcoordlat') #using value from Tweet class
         coordEnd = line.find(' ', coordStart)
         latitude = int(line[coordStart:coordEnd])-90
         #print( "id_str_json=%s longitude=%d latitude=%d" % (id_str_json,longitude,latitude) )
