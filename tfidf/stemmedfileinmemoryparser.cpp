@@ -53,8 +53,14 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
         while(!stopWordFin.eof())
         {
             std::string line;
-            std::getline(stopWordFin, line); // TODO remove SPDB data from stopwords
-            stopWords.insert(line.substr(0,line.find_first_of(' '))); // skip everything after first space
+            std::getline(stopWordFin, line);
+            std::string stopWord = line.substr(0,line.find_first_of(' '));
+            // remove SPDB data from stopwords
+            if (stopWord.find("spdb") == 0)
+            {
+                continue;
+            }
+            stopWords.insert(stopWord); // skip everything after first space
         }
         std::cout << "Stop words list size: " << stopWords.size() << std::endl;
     }
@@ -308,7 +314,7 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
         std::cout << "thread start:" << start << " end:" << end << std::endl;
         // iterate rows and columns of distance matrix
         for (int r = start; r < end; r++)
-        {//(int)(100*(r/rowCount)) TODO %
+        {
             if (start == 0)
             {
                 std::cout << "\r" << 6*r << "/"<< rowCount << " completed.       " << std::flush;
@@ -351,10 +357,13 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
 
     std::cout << std::endl << "Find max distance..." << std::endl;
     int maxElement = 0;
+    int rIndex = 0;
     for ( auto & entry : distanceV )
     {
-	const int tempMax = std::distance(entry.begin(), std::max_element(entry.begin(), entry.end()));
-        maxElement = (tempMax > maxElement ? tempMax : maxElement);
+	const int cMaxIndex = std::distance(entry.begin(), std::max_element(entry.begin(), entry.end()));
+        maxElement = (distanceV[rIndex][cMaxIndex] > maxElement ? distanceV[rIndex][cMaxIndex] : maxElement);
+        //std::cout << "maxElement " << maxElement << std::endl;
+        rIndex++;
     }
 
     std::cout << "Counting similartiy from distances... based on max=" << maxElement << std::endl;
@@ -370,21 +379,32 @@ void CountCoordinateSimilarity( const char* parsedCoordsFile,
         }
     }
 
-    std::cout << "Saving results to file..." << std::endl;
+    std::cout << "Stringify similarity and distance results..." << std::endl;
     // removeFile(summarySimilarityCoord) in caller
     std::ofstream out(similarityCoordsFile, std::ios::trunc | std::ios::out);
     if(!out.is_open())
         return;
 
+    std::ostringstream oss;
+    int lineCount = 0;
+    int writeCount = 0;
     for (int r = 0; r < rowCount; r++ )
     {
-        std::ostringstream oss;
         for ( int c = 0; c < rowCount-r; c++ )
         {
             oss << r << " " << c << " " << distanceV[r][c] << " " << distanceV[rowCount-r-1][rowCount-c-1] << std::endl;
+            lineCount++;
         }
-        out << oss.str();
+        const int k = 5000;
+        if ( lineCount % rowCount/k )
+        {
+            writeCount++;
+            std::cout << "\r" << "Saving results to file..." << writeCount << " out of " << (int)(rowCount*rowCount)/(int)(k/20) << std::flush;
+            out << oss.str();
+            out.seekp(0);
+        }
     }
+    std::cout << std::endl;
 
     out.flush();
     out.close();

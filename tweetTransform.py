@@ -280,7 +280,7 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
 
 ###############################################################################
 
-def makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
+def makeTfidfMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
     print( "Making matrix for clustering..." )
     removeFile(tweetsMatrixFile)
     matrixfile = open(tweetsMatrixFile, 'w')
@@ -296,7 +296,6 @@ def makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
 
         #matrixEntries: each value is given in triple (row coordinate, column coordinate, value)
 
-        currentIndex = 0
         for entry in wordCollection:
             if entry.strip() == '':
                 continue
@@ -306,6 +305,40 @@ def makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
             value = float(pair[1])
             matrixfile.write(str(rowIndex)+' '+str(columnIndex)+' '+str(value))
             matrixfile.write('\n')
+
+        rowIndex = rowIndex + 1
+    
+    matrixfile.close()    
+
+    return
+
+###############################################################################
+
+def makeCoordMatrixFile(summaryParsedCoord, tweetsMatrixFile):
+    print( "Making matrix for clustering..." )
+    removeFile(tweetsMatrixFile)
+    matrixfile = open(tweetsMatrixFile, 'w')
+
+    fIn = open(summaryParsedCoord, 'r')
+    rowIndex = 1
+    for line in fIn:
+        #skip json name
+        line = line.split(' ', 1)[1]
+
+        #split to index:value pairs
+        coordCollection = line.split(' ')
+
+        #matrixEntries: each value is given in quadriple (row coordinate, column coordinate, value)
+
+        for entry in coordCollection:
+            if entry.strip() == '':
+                continue
+            #print( "entry'%s'" % entry )
+            pair = entry.split(' ')
+            longitude = int(pair[0])
+            latitude = int(pair[1])
+            matrixfile.write(str(rowIndex)+' '+'1'+' '+str(longitude)+'\n')
+            matrixfile.write(str(rowIndex)+' '+'2'+' '+str(latitude)+'\n')
 
         rowIndex = rowIndex + 1
     

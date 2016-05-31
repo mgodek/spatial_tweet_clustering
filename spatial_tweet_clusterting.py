@@ -9,7 +9,7 @@ import clusterModule
 import tweetTransform
 import numpy as np
 from clusterView import displayResultsOnMap
-from tweetTransform import parseData, stemData, tfidfData, makeMatrixFile, extractCoord, removeFile
+from tweetTransform import parseData, stemData, tfidfData, makeTfidfMatrixFile, extractCoord, removeFile, makeCoordMatrixFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 from similarity import similarityCoord
@@ -42,10 +42,11 @@ def main_menu():
     print ("1. Run setup")
     print ("2. Fetch tweets")
     print ("3. Fetch tweets periodically")
-    print ("4. Prepare tweets for clustering")
-    print ("5. Cluster tweets naive")
-    print ("6. Cluster tweets less naive")
-    print ("7. View results")
+    print ("4. Parse and stem tweets")
+    print ("5. Tfidf stemmed tweets")
+    print ("6. Cluster tweets using all data")
+    print ("7. Cluster tweets using location data")
+    print ("8. View results")
     print ("0. Quit")
     choice = raw_input(" >>  ")
     exec_menu(choice)
@@ -141,46 +142,32 @@ def fetchTweetsPeriodicallyMenu():
 
 ###############################################################################
 
-def transformTweetDataMenu():
-    print ( "Transforming raw json tweets to R input" )
+def parseTweetDataMenu():
+    print ( "Parsing and stemming raw json tweets" )
 
     global interactive
 
     onlySpdbData = False
 
-    if interactive == True:
-        print ( "Parse raw data? y/n. Default n." )
-        choice = raw_input(" >>  ")
-        if choice == 'y':
-            print ( "Use only location data? y/n. Default n." )
-            choice = raw_input(" >>  ")
-            if choice == 'y':
-                 onlySpdbData = True
-            parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
-    else:
-        parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
+    print ( "Use only location data? y/n. Default n." )
+    choice = raw_input(" >>  ")
+    if choice == 'y':
+         onlySpdbData = True
 
-    if interactive == True:
-        print ( "Calculate distances of tweets? y/n. Default n." )
-        choice = raw_input(" >>  ")
-        if choice == 'y':
-            extractCoord(summaryParsedTweets, summaryParsedCoord)
-            similarityCoord(summaryParsedCoord, summarySimilarityCoord)
-    else:
-        extractCoord(summaryParsedTweets, summaryParsedCoord)
-        similarityCoord(summaryParsedCoord, summarySimilarityCoord)
+    parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
 
-    if interactive == True:
-        print ( "Stem parsed data? y/n. Default n." )
-        choice = raw_input(" >>  ")
-        if choice == 'y':
-            stemData(summaryParsedTweets, summaryStemmedTweets)
-    else:
-        stemData(summaryParsedTweets, summaryStemmedTweets)
+    stemData(summaryParsedTweets, summaryStemmedTweets)
 
-    thresholdBottom = float(0.4)
-    thresholdUpper  = float(0.9)
-    stopWordCountBottom = 8
+###############################################################################
+
+def tfIdfTweetDataMenu():
+    print ( "Tfidfing parsed json tweets to R input" )
+
+    global interactive
+
+    thresholdBottom = float(0.01)
+    thresholdUpper  = float(100)
+    stopWordCountBottom = 17
     sampleRatio = 0.3
     if interactive == True:
         print ( "TFIDF stemmed data? y/n. Default n." )
@@ -191,7 +178,7 @@ def transformTweetDataMenu():
             if choice != '':
                 thresholdBottom=float(choice)
 
-            print ( "Specify threshold upper? default=%s. Enter 10 to turn it off." % str(thresholdUpper) )
+            print ( "Specify threshold upper? default=%s. Enter 100 to turn it off." % str(thresholdUpper) )
             choice = raw_input(" >>  ")
             if choice != '':
                 thresholdUpper=float(choice)
@@ -214,14 +201,6 @@ def transformTweetDataMenu():
                       summaryDictionaryFile, thresholdUpper, thresholdBottom,
                       stopWordCountBottom, sampleRatio)
 
-    if interactive == True:
-        print ( "Make matrix? y/n. Default n." )
-        choice = raw_input(" >>  ")
-        if choice == 'y':
-            makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
-    else:
-        makeMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
-
     print ("9. Back")
     print ("0. Quit")
     choice = raw_input(" >>  ")
@@ -233,9 +212,12 @@ def transformTweetDataMenu():
 def clusterTweetsNaiveMenu():
     print ("Clustering tweets with Clara - naive approach !") 
 
-    print ("How many clusters do You want to create? (default=7)")
-    kRead = raw_input(" >>  ")
+    print ( "Making matrix file" )
+    makeTfidfMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
+
     k = 7
+    print ("How many clusters do You want to create? (default=%d)" % k )
+    kRead = raw_input(" >>  ")
     try:
         k = int(kRead)
     except ValueError:
@@ -254,12 +236,29 @@ def clusterTweetsNaiveMenu():
 def clusterTweetsLessNaiveMenu():
     print ("Clustering tweets with Clara - less naive approach !")
 
-    print ( "TODO need to scale features!" ) #TODO
+    global interactive
 
-    print ("How many clusters do You want to create?")
-    k = raw_input(" >>  ")
+    print ( "Making matrix file" )
+    extractCoord(summaryParsedTweets, summaryParsedCoord)
+    makeCoordMatrixFile(summaryParsedCoord, tweetsMatrixFile)
 
-    clusterClara(tweetsMatrixFile, k, clusterLessNResultFile)
+    if interactive == True:
+        print ( "Calculate distances of tweets? y/n. Default n." )
+        choice = raw_input(" >>  ")
+        if choice == 'y':
+            similarityCoord(summaryParsedCoord, summarySimilarityCoord)
+    else:
+        similarityCoord(summaryParsedCoord, summarySimilarityCoord)
+
+    k = 7
+    print ("How many clusters do You want to create? (default=%d)" % k )
+    kRead = raw_input(" >>  ")
+    try:
+        k = int(kRead)
+    except ValueError:
+        k = 7
+
+    clusterClara(summaryParsedCoord, k, clusterLessNResultFile)
 
     print ("9. Back")
     print ("0. Quit")
@@ -300,10 +299,11 @@ menu_actions = {
     '1': setup,
     '2': fetchTweetsMenu,
     '3': fetchTweetsPeriodicallyMenu,
-    '4': transformTweetDataMenu,
-    '5': clusterTweetsNaiveMenu,
-    '6': clusterTweetsLessNaiveMenu,
-    '7': viewResultsMenu,
+    '4': parseTweetDataMenu,
+    '5': tfIdfTweetDataMenu,
+    '6': clusterTweetsNaiveMenu,
+    '7': clusterTweetsLessNaiveMenu,
+    '8': viewResultsMenu,
     '9': back,
     '0': exit,
 }
