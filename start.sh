@@ -2,6 +2,8 @@
 
 R --version
 
+sudo pip install numpy
+
 #install matplotlib dependencies
 FILE="basemap-1.0.7.tar.gz"
 if [ ! -f $FILE ];

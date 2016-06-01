@@ -47,11 +47,13 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
 
     std::ifstream stopWordFin(stopWordFile, std::ios::in);
     std::set<std::string> stopWords;
+    bool enteredStopWords = false;
     if(stopWordFin.is_open())
     {
         std::cout << "Using stop word list" << std::endl;
         while(!stopWordFin.eof())
         {
+	    enteredStopWords = true;
             std::string line;
             std::getline(stopWordFin, line);
             std::string stopWord = line.substr(0,line.find_first_of(' '));
@@ -97,6 +99,23 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
                 continue;
             }
 
+            if(enteredStopWords && word.find("spdbcoordlong") == 0)
+	    {
+	      std::string longitudeStr = word.substr(13);
+	      if (this->_geoPerDoc.count(docNumber) > 0)
+		this->_geoPerDoc[docNumber].first = atof(longitudeStr.c_str());
+	      else
+	        this->_geoPerDoc.insert({docNumber, std::make_pair<double, double>(atof(longitudeStr.c_str()), 0.0)});
+	    }
+	    if(enteredStopWords && word.find("spdbcoordlat") == 0)
+	    {
+	      std::string latitudeStr = word.substr(13);
+	      if (this->_geoPerDoc.count(docNumber) > 0)
+		this->_geoPerDoc[docNumber].second = atof(latitudeStr.c_str());
+	      else
+	        this->_geoPerDoc.insert({docNumber, std::make_pair<double, double>(0.0, atof(latitudeStr.c_str()))});
+	    }
+	    
             size_t hash = this->hash_fn(word);
             if(this->_wordsToCoords.count(hash) == 0)
             {
@@ -255,6 +274,131 @@ bool StemmedFileInMemoryParser::storeTfidfInFile(const char* tfidfFileName, cons
 
     return true;
 }
+
+double addCoordsForEuclidean(
+  const std::unordered_map<unsigned int, double>& two,
+  const std::unordered_map<unsigned int, double>& one, 
+  unsigned int index)
+{
+  double result = 0.0;
+  if(one.count(index) > 0 && two.count(index) > 0)
+      result += pow(one.at(index) - two.at(index), 2.0);
+    else if(one.count(index) > 0)
+      result += pow(one.at(index), 2.0);
+    else if(two.count(index) > 0)
+      result += pow(two.at(index), 2.0);
+    
+    return result;
+}
+
+std::pair<double, double> euclideanDistanceFromZeroAndMean(
+  const std::unordered_map<unsigned int, double>& mean,
+  const std::unordered_map<unsigned int, double>& zero,
+  const std::unordered_map<unsigned int, double>& one,
+  const unsigned int numDims)
+{
+  std::pair<double, double> result;
+  for(unsigned int i=0; i<numDims; ++i)
+  {
+    result.first = addCoordsForEuclidean(mean, one, i);
+    result.second = addCoordsForEuclidean(one, zero, i);
+  }
+  
+  result.first = sqrt(result.first);
+  result.second = sqrt(result.second);
+  return result;
+}
+
+double euclideanDistance(
+  const std::unordered_map<unsigned int, double>& two,
+  const std::unordered_map<unsigned int, double>& one, 
+  unsigned int numDims)
+{
+  double result = 0.0;
+  for(unsigned int i=0; i<numDims; ++i)
+  {
+    result = addCoordsForEuclidean(one, two, i);
+  }
+  
+  return sqrt(result);
+}
+
+void StemmedFileInMemoryParser::countFeatures()
+{
+  // find mean point
+  std::unordered_map<unsigned int, double> meanPoint;
+  std::unordered_map<unsigned int, double> zeroPoint; // doesn't need initialiation, zero coords are empty indies.
+  unsigned int maxPointIndex = -1;
+  const unsigned int numDim = this->_nextCoord;
+  double maxDistance = 0.0;
+  for(auto point : this->tfIdfResults)
+  {
+    for(auto coords : *(point.second))
+    {
+      if (meanPoint.count(coords.first) > 0)
+	meanPoint[coords.first] += coords.second;
+      else
+	meanPoint.insert({coords.first, coords.second});
+    }
+  }
+  
+  const unsigned int numPoints = this->tfIdfResults.size();
+  for(unsigned int i =0; i<numDim; ++i)
+  {
+    if(meanPoint.count(i) > 0)
+    {
+      meanPoint[i] = meanPoint[i] / numPoints; // finishing up with mean point
+    }
+  }
+  
+  for(unsigned int pIndex = 0; pIndex < numPoints; ++pIndex)
+  {
+    Feature f;
+    f.longitude = this->_geoPerDoc[pIndex].first;
+    f.latitude = this->_geoPerDoc[pIndex].second;
+    std::unordered_map<unsigned int, double>* point = this->tfIdfResults[pIndex];
+    f.countOfNonZero = point->size();
+    std::pair<double, double> meanAndZeroDist = euclideanDistanceFromZeroAndMean(meanPoint, zeroPoint, *point, numDim);
+    f.distanceFromMean = meanAndZeroDist.first;
+    f.distanceFromZero = meanAndZeroDist.second;
+    if(f.distanceFromZero > maxDistance)
+      maxPointIndex = pIndex;
+    this->_dataFeatures.insert({pIndex, f});
+  }
+  
+  std::unordered_map<unsigned int, double>* maxPoint =  this->tfIdfResults[maxPointIndex];
+  for (unsigned int pIndex = 0; pIndex < numPoints; ++pIndex)
+  {
+    if(pIndex != maxPointIndex)
+    {
+      this->_dataFeatures[pIndex].distanceFromMax = euclideanDistance(*(this->tfIdfResults[pIndex]), *maxPoint, numDim);
+    }
+    else 
+    {
+      this->_dataFeatures[pIndex].distanceFromMax = 0.0;
+    }
+  }
+}
+
+void StemmedFileInMemoryParser::storeFeatures()
+{
+  std::string saveTo("summaryFeatures.txt");
+  std::cout << __FUNCTION__ << std::endl;
+    std::ofstream out(saveTo, std::ios::trunc | std::ios::out);
+    if(!out.is_open())
+        return;
+    //out << _wordsCountPerDocument.size() << " " << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
+    for(auto docName : this->_docName)
+    { // for all docs
+        Feature f = this->_dataFeatures[docName.first];
+        out << docName.second << ' ' << f.countOfNonZero << " " << f.distanceFromMax << " " << f.distanceFromMean << " "
+	  << f.distanceFromZero << " " << f.longitude << " " << f.latitude << std::endl;
+    }
+    //out << std::ends;
+    out.flush();
+    out.close();
+}
+
 
 void CountCoordinateSimilarity( const char* parsedCoordsFile,
                                 const char* similarityCoordsFile )

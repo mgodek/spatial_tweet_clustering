@@ -9,6 +9,16 @@
 class StemmedFileInMemoryParser
 {
 public:
+  
+  struct Feature {
+    unsigned int countOfNonZero;
+    unsigned int latitude;
+    unsigned int longitude;
+    double distanceFromZero;
+    double distanceFromMax;
+    double distanceFromMean;
+  };
+  
     StemmedFileInMemoryParser();
 
     virtual ~StemmedFileInMemoryParser();
@@ -20,6 +30,10 @@ public:
     void createStopWordList(double thresholdUpper, double thresholdBottom, unsigned int stopWordCountBottom, const char* stopWordFile);
 
     bool storeTfidfInFile(const char* tfidfFile, const char* dictFileName);
+    
+    void countFeatures();
+    
+    void storeFeatures();
 
     // document index mapped to result for file
     typedef std::unordered_map<unsigned int, std::unordered_map<unsigned, double>*> TfIdfResults;
@@ -32,7 +46,9 @@ protected:
     double idf(size_t word);
 
     unsigned int _nextCoord;
+    std::unordered_map<unsigned int, std::pair<double, double>> _geoPerDoc;
     std::unordered_map<unsigned int, std::pair<std::string, unsigned int>> _dictionary;
+    std::unordered_map<unsigned int, Feature> _dataFeatures;
     double minimalValue;
     double quant;
     std::unordered_map<size_t, unsigned int> _wordsToCoords;
@@ -77,8 +93,9 @@ extern "C" {
     {
 	parser->loadData(stemmedFile, stopWordFile);
 	parser->countTfidf();
-
+	parser->countFeatures();
         parser->storeTfidfInFile(tfidfFile, dictFile);
+	parser->storeFeatures();
     }
 
     void CountCoordinateSimilarity( const char* parsedCoordsFile,
