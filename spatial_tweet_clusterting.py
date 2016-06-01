@@ -99,7 +99,11 @@ def fetchTweetsMenu():
     except ValueError:
         amount = 30000
 
-    removeFile(summaryRawTweets)
+    removeOldTweets = "n"
+    print ("Remove previous tweets? y/n default=%s " % removeOldTweets )
+    removeOldTweets = raw_input(" >>  ")
+    if removeOldTweets == "y":
+        removeFile(summaryRawTweets)
 
     print ("Fetching ", amount, " tweets !")
     

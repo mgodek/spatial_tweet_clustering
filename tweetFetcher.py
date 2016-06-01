@@ -72,7 +72,7 @@ class StdOutListener(StreamListener):
 
         self.num_tweets += 1
         if self.num_tweets > self.amount:
-            print( "Max tweets reached" )
+            print( "\nAll tweets collected" )
             return False
 
 	progress = (self.num_tweets / self.amount)*100
