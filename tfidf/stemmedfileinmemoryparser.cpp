@@ -145,10 +145,14 @@ bool StemmedFileInMemoryParser::loadData(const char* stemmedFile, const char* st
                     this->_numberOfDocumentsWithGivenWords[hash] += 1;
             }
         }
-        unsigned docIndex = docNumber++;
-        this->_docName.push_back({docIndex, fileId});
-        this->_docsLens.insert({docIndex, lineLen});
-        this->_wordsCountPerDocument.insert({docIndex, doc});
+        
+        if (fileId.size() > 2)
+	{
+	  unsigned docIndex = docNumber++;
+          this->_docName.push_back({docIndex, fileId});
+          this->_docsLens.insert({docIndex, lineLen});
+          this->_wordsCountPerDocument.insert({docIndex, doc});
+	}
     }
     in.close();
     return true;
