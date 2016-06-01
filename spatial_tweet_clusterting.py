@@ -47,6 +47,7 @@ def main_menu():
     print ("6. Cluster tweets using all data")
     print ("7. Cluster tweets using location data")
     print ("8. View results")
+    print ("9. View Rand Index")
     print ("0. Quit")
     choice = raw_input(" >>  ")
     exec_menu(choice)
@@ -270,6 +271,13 @@ def viewResultsMenu():
 
 ###############################################################################
 
+def viewRandMenu():
+    clusterResults(clusterLessNResultFile, clusterNaiveResultFile)
+    main_menu()
+    return
+
+###############################################################################
+
 def back():
     menu_actions['main_menu']()
 
@@ -291,7 +299,7 @@ menu_actions = {
     '6': clusterTweetsAllDataMenu,
     '7': clusterTweetsCoordinatesMenu,
     '8': viewResultsMenu,
-    '9': back,
+    '9': viewRandMenu,
     '0': exit,
 }
 

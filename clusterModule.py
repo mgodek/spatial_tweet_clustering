@@ -12,7 +12,7 @@ import rpy2.robjects.packages as rpackages
 
 ###############################################################################
 
-packnames = ('cluster', 'tictoc')
+packnames = ('cluster', 'tictoc', 'mclust')
 
 ###############################################################################
 
@@ -72,16 +72,19 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
 
 ###############################################################################
 
-def clusterResults(clusterDataFile):
+def clusterResults(clusterLessNResultFile, clusterNaiveResultFile):
     print ( "Show clustering result" )
 
     r_execShowResults = robjects.r('''
-      function(outputFileName) {         
-	 clarax <- load(outputFileName)
-         #plot(clarax) #TODO need to check how to load and save data frame data. This approach fails
+      library(mclust)
+      function(clusterLessNResultFile, clusterNaiveResultFile) {         
+         clusterCoord = read.table(clusterLessNResultFile)
+         clusterAll = read.table(clusterNaiveResultFile)
+         randIdx = adjustedRandIndex(clusterCoord,clusterAll)
+         print(randIdx)
      }
     ''')
-    r_execShowResults(clusterDataFile)
+    r_execShowResults(clusterLessNResultFile,clusterNaiveResultFile)
     return
 
 ###############################################################################
