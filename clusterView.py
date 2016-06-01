@@ -9,15 +9,15 @@ from numpy import ndarray
 ###############################################################################
 
 def displayResultsOnMap(summaryParsedCoord, clusterResult, title):
-    print( "displayResultsOnMap" )
+    print( "displayResultsOnMap %s" % title )
 
     #europeBB=[-31.266001, 27.636311, 39.869301, 81.008797]
     # setup stereographic basemap.
     # lat_ts is latitude of true scale.
     # lon_0,lat_0 is central point.
-    m = Basemap(width=6000000,height=5000000,
+    m = Basemap(width=10000000,height=6000000,
                 resolution='l',projection='stere',\
-                lat_ts=0,lat_0=55,lon_0=20)
+                lat_ts=0,lat_0=45,lon_0=20)
     m.drawcoastlines()
     m.fillcontinents(color='coral',lake_color='aqua')
 
@@ -46,8 +46,8 @@ def displayResultsOnMap(summaryParsedCoord, clusterResult, title):
     for line in fIn:
         coordMat[rowIndex, 0] = rowIndex
         #id_str_json = line.split(' ', 1)[0]
-        longitude = int(line.split(' ', 2)[1])
-        latitude = int(line.split(' ', 2)[2])
+        latitude = int(line.split(' ', 2)[1])
+        longitude = int(line.split(' ', 2)[2])
         #print( "id_str_json=%s longitude=%d latit11ude=%d" % (id_str_json,longitude,latitude) )
         coordMat[rowIndex, 1] = latitude
         coordMat[rowIndex, 2] = longitude
@@ -76,7 +76,7 @@ def displayResultsOnMap(summaryParsedCoord, clusterResult, title):
     noGroups = np.amax(clusterV[:,1])
     print( "noGroups=%d" % noGroups )
 
-    colorsArray = ["bo", "ro", "go", "yo", "wo", "mo", "kx"]
+    colorsArray = ["bo", "ro", "go", "yo", "wo", "mo", "co"]
 
     for i in range(1, noGroups+1):
         # get tweets indx for give group id

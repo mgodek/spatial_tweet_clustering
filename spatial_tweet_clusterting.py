@@ -9,7 +9,7 @@ import clusterModule
 import tweetTransform
 import numpy as np
 from clusterView import displayResultsOnMap
-from tweetTransform import parseData, stemData, tfidfData, makeTfidfMatrixFile, extractCoord, removeFile, makeCoordMatrixFile
+from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile, extractCoord
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 from similarity import similarityCoord
@@ -213,7 +213,7 @@ def clusterTweetsAllDataMenu():
     print ("Clustering tweets with Clara using all available data") 
 
     print ( "Making matrix file" )
-    makeTfidfMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
+    makeClusterMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
 
     k = 7
     print ("How many clusters do You want to create? (default=%d)" % k )
@@ -238,7 +238,7 @@ def clusterTweetsCoordinatesMenu():
 
     print ( "Making matrix file" )
     extractCoord(summaryParsedTweets, summaryParsedCoord)
-    makeCoordMatrixFile(summaryParsedCoord, tweetsMatrixFile)
+    makeClusterMatrixFile(summaryParsedCoord, tweetsMatrixFile)
 
     #print ( "Calculate distances of tweets? y/n. Default n." )
     #choice = raw_input(" >>  ")

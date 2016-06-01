@@ -280,64 +280,31 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
 
 ###############################################################################
 
-def makeTfidfMatrixFile(summaryTfidfTweets, tweetsMatrixFile):
+def makeClusterMatrixFile(summaryData, tweetsMatrixFile):
     print( "Making matrix for clustering..." )
     removeFile(tweetsMatrixFile)
     matrixfile = open(tweetsMatrixFile, 'w')
 
-    fIn = open(summaryTfidfTweets, 'r')
+    fIn = open(summaryData, 'r')
     rowIndex = 1
     for line in fIn:
         #skip json name
         line = line.split(' ', 1)[1]
 
         #split to index:value pairs
-        wordCollection = line.split(' ')
-
-        #matrixEntries: each value is given in triple (row coordinate, column coordinate, value)
-
-        for entry in wordCollection:
-            if entry.strip() == '':
-                continue
-            #print( "entry'%s'" % entry )
-            pair = entry.split(':')
-            columnIndex = int(pair[0])
-            value = float(pair[1])
-            matrixfile.write(str(rowIndex)+' '+str(columnIndex)+' '+str(value))
-            matrixfile.write('\n')
-
-        rowIndex = rowIndex + 1
-    
-    matrixfile.close()    
-
-    return
-
-###############################################################################
-
-def makeCoordMatrixFile(summaryParsedCoord, tweetsMatrixFile):
-    print( "Making matrix for clustering..." )
-    removeFile(tweetsMatrixFile)
-    matrixfile = open(tweetsMatrixFile, 'w')
-
-    fIn = open(summaryParsedCoord, 'r')
-    rowIndex = 1
-    for line in fIn:
-        #skip json name
-        line = line.split(' ', 1)[1]
-
-        #split to index:value pairs
-        coordCollection = line.split(' ', 1)
+        featureCollection = line.split(' ')
 
         #matrixEntries: each value is given in quadriple (row coordinate, column coordinate, value)
 
-        #print( "entry'%s'" % coordCollection )
-        longitude = int(coordCollection[0])
-        latitude = int(coordCollection[1])
-        matrixfile.write(str(rowIndex)+' '+'1'+' '+str(longitude)+'\n')
-        matrixfile.write(str(rowIndex)+' '+'2'+' '+str(latitude)+'\n')
+        dataLine = ""
+        for i in range(0, len(featureCollection)):          
+            dataLine = dataLine + str(rowIndex) + " " + str(i+1) + " " + str(featureCollection[i]+'\n')
+
+        matrixfile.write(dataLine)
 
         rowIndex = rowIndex + 1
     
+    fIn.close()
     matrixfile.close()    
 
     return
@@ -365,7 +332,7 @@ def extractCoord(summaryParsedTweets, summaryParsedCoord):
         latitude = int(line[coordStart:coordEnd])-90
         #print( "id_str_json=%s longitude=%d latitude=%d" % (id_str_json,longitude,latitude) )
 
-        fOut.write(id_str_json+' '+str(longitude)+' '+str(latitude)+'\n')
+        fOut.write(id_str_json+' '+str(latitude)+' '+str(longitude)+'\n')
 
     fIn.close()
     fOut.close()
