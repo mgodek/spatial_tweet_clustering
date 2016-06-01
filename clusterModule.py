@@ -12,7 +12,7 @@ import rpy2.robjects.packages as rpackages
 
 ###############################################################################
 
-packnames = ('cluster', 'tictoc', 'mclust')
+packnames = ('cluster', 'tictoc', 'igraph')
 
 ###############################################################################
 
@@ -80,7 +80,7 @@ def clusterResults(clusterLessNResultFile, clusterNaiveResultFile):
       function(clusterLessNResultFile, clusterNaiveResultFile) {         
          clusterCoord = read.table(clusterLessNResultFile)
          clusterAll = read.table(clusterNaiveResultFile)
-         randIdx = adjustedRandIndex(clusterCoord,clusterAll)
+         randIdx = compare(clusterCoord[,1],clusterAll[,1], "rand")
          print(randIdx)
      }
     ''')
