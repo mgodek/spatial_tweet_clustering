@@ -386,7 +386,13 @@ void StemmedFileInMemoryParser::storeFeatures()
   std::cout << __FUNCTION__ << std::endl;
     std::ofstream out(saveTo, std::ios::trunc | std::ios::out);
     if(!out.is_open())
-        return;
+    {
+      std::cout << "Cannot create summaryFeatures file" << std::endl;
+      return;
+    }
+    
+    std::cout << "DocName size: " << this->_docName.size() << std::endl;
+    std::cout << "Data features size: " << this->_dataFeatures.size() << std::endl;
     //out << _wordsCountPerDocument.size() << " " << _nextCoord << " " << this->quant << std::endl; // header format: <number of vectors> <number of dimensions> <quantization value>
     for(auto docName : this->_docName)
     { // for all docs
@@ -397,6 +403,7 @@ void StemmedFileInMemoryParser::storeFeatures()
     //out << std::ends;
     out.flush();
     out.close();
+    std::cout << "after close store features" << std::endl;
 }
 
 

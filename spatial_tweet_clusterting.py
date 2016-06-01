@@ -220,7 +220,7 @@ def clusterTweetsAllDataMenu():
     print ("Clustering tweets with Clara using all available data") 
 
     print ( "Making matrix file" )
-    makeClusterMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
+    makeClusterMatrixFile('summaryFeatures.txt', tweetsMatrixFile)   
 
     k = 7
     print ("How many clusters do You want to create? (default=%d)" % k )

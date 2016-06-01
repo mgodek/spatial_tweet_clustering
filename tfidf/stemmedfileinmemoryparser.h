@@ -5,6 +5,7 @@
 #include <functional>
 #include <list>
 #include <unordered_map>
+#include <iostream>
 
 class StemmedFileInMemoryParser
 {
@@ -96,6 +97,7 @@ extern "C" {
 	parser->countFeatures();
         parser->storeTfidfInFile(tfidfFile, dictFile);
 	parser->storeFeatures();
+	std::cout << "Done with all in TFIDF_UseStopWordList_Run" << std::endl;
     }
 
     void CountCoordinateSimilarity( const char* parsedCoordsFile,
