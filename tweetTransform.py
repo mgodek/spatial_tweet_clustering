@@ -302,8 +302,9 @@ def makeClusterMatrixFile(summaryData, tweetsMatrixFile):
         #matrixEntries: each value is given in quadriple (row coordinate, column coordinate, value)
 
         dataLine = ""
-        for i in range(0, len(featureCollection)):          
-            dataLine = dataLine + str(rowIndex) + " " + str(i+1) + " " + str(featureCollection[i]+'\n')
+        for i in range(0, len(featureCollection)):
+            featureStr = ' '.join(str(featureCollection[i]).split())
+            dataLine = dataLine + str(rowIndex) + " " + str(i+1) + " " + featureStr +'\n'
 
         matrixfile.write(dataLine)
 

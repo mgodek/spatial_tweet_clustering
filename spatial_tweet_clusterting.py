@@ -82,10 +82,7 @@ def setup():
     else:
 	print ("This program is not run as sudo so this function will not work")
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -112,10 +109,7 @@ def fetchTweetsMenu():
     except KeyboardInterrupt, e:
         print( "Interrupted" )
     
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -141,10 +135,7 @@ def fetchTweetsPeriodicallyMenu():
             time.sleep(3600*hours)
 
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -156,19 +147,16 @@ def parseTweetDataMenu():
 
     onlySpdbData = False
 
-    print ( "Use only location data? y/n. Default n." )
-    choice = raw_input(" >>  ")
-    if choice == 'y':
-         onlySpdbData = True
+    #print ( "Use only location data? y/n. Default n." )
+    #choice = raw_input(" >>  ")
+    #if choice == 'y':
+    #     onlySpdbData = True
 
     parseData(onlySpdbData, summaryRawTweets, summaryParsedTweets)
 
     stemData(summaryParsedTweets, summaryStemmedTweets)
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -181,7 +169,7 @@ def tfIdfTweetDataMenu():
     thresholdBottom = float(0.01)
     thresholdUpper  = float(100)
     stopWordCountBottom = 17
-    sampleRatio = 0.3
+    sampleRatio = 1.0
     if interactive == True:
         print ( "Specify threshold bottom? default=%s. Enter 0 to turn it off." % str(thresholdBottom) )
         choice = raw_input(" >>  ")
@@ -208,10 +196,7 @@ def tfIdfTweetDataMenu():
               summaryDictionaryFile, thresholdUpper, thresholdBottom,
               stopWordCountBottom, sampleRatio)
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -232,10 +217,7 @@ def clusterTweetsAllDataMenu():
 
     clusterClara(tweetsMatrixFile, k, clusterNaiveResultFile)
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -262,10 +244,7 @@ def clusterTweetsCoordinatesMenu():
 
     clusterClara(tweetsMatrixFile, k, clusterLessNResultFile)
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
@@ -286,10 +265,7 @@ def viewResultsMenu():
     else:
         displayResultsOnMap(summaryParsedCoord, clusterNaiveResultFile, "Tweets' all data")
 
-    print ("9. Back")
-    print ("0. Quit")
-    choice = raw_input(" >>  ")
-    exec_menu(choice)
+    main_menu()
     return
 
 ###############################################################################
