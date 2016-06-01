@@ -9,12 +9,12 @@ import clusterModule
 import tweetTransform
 import numpy as np
 from clusterView import displayResultsOnMap
-from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile, extractCoord
+from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile, extractCoord, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 from similarity import similarityCoord
 
-pathToRawTweets        = "tweets"
+summaryRawTweets       = 'summaryRawTweets.txt'
 summarySimilarityCoord = 'summarySimilarityCoord.txt'
 summaryParsedCoord     = 'summaryParsedCoord.txt'
 summaryParsedTweets    = 'summaryParsedTweets.txt'
@@ -76,7 +76,6 @@ def exec_menu(choice):
 
 def setup():
     print ( "Running setup" )
-    #TODO run start.sh ?
     
     if os.getuid() == 0:
         setupCluster()
@@ -99,11 +98,13 @@ def fetchTweetsMenu():
         amount = int(amountRead)
     except ValueError:
         amount = 30000
-        
+
+    removeFile(summaryRawTweets)
+
     print ("Fetching ", amount, " tweets !")
     
     try:
-        tweetFetcher.fetchTweets(amount)
+        tweetFetcher.fetchTweets(summaryRawTweets, amount)
     except KeyboardInterrupt, e:
         print( "Interrupted" )
     
@@ -122,10 +123,12 @@ def fetchTweetsPeriodicallyMenu():
     print ("Fetching ", amount, " tweets periodically every ", hours, " hours!")
     strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
+    removeFile(summaryRawTweets)
+
     for x in range(1, times):
         print( "Round ", x, " out of ", times )
         try:
-            tweetFetcher.fetchTweets(amount)
+            tweetFetcher.fetchTweets(summaryRawTweets, amount)
         except KeyboardInterrupt, e:
             print( "Interrupted" )
 
@@ -154,7 +157,7 @@ def parseTweetDataMenu():
     if choice == 'y':
          onlySpdbData = True
 
-    parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets)
+    parseData(onlySpdbData, summaryRawTweets, summaryParsedTweets)
 
     stemData(summaryParsedTweets, summaryStemmedTweets)
 

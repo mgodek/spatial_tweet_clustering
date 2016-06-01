@@ -10,6 +10,8 @@ import json
 import os
 import sys
 
+###############################################################################
+
 class AccessTokens:
     # Go to http://apps.twitter.com and create an app.
     # The consumer key and secret will be generated for you after
@@ -42,12 +44,15 @@ class AccessTokens:
             self.access_token_secret=json_data["access_token_secret"]
             print(self.__dict__)
 
+###############################################################################
+
 class StdOutListener(StreamListener):
 
-    def __init__(self):
+    def __init__(self,summaryRawTweets):
         super(StdOutListener, self).__init__()
-        self.num_tweets = 0
+        self.num_tweets = 1
 	self.amount = maxAmount
+        self.summaryRawTweets = summaryRawTweets
 
     """ A listener handles tweets that are received from the stream.
     This is a basic listener that just prints received tweets to stdout.
@@ -55,21 +60,19 @@ class StdOutListener(StreamListener):
     def on_data(self, data):
 	#use https://git-lfs.github.com/ to store collected data
     	#gather tweets and save them to file
-        jsonData = json.loads(data);
+        data = ' '.join(data.split())
+        jsonData = json.loads(data)
         #print(jsonData)
-        directory="tweets"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        
-        #if not jsonData["id_str"]:
+
         if 'id_str' in data:
-            with open(directory+"/"+jsonData["id_str"]+".json", 'w') as outfile:
+            with open(self.summaryRawTweets, 'a') as outfile:
                 json.dump(jsonData, outfile)
+                outfile.write('\n');
                 outfile.close()
 
         self.num_tweets += 1
         if self.num_tweets > self.amount:
-            print( "" )
+            print( "Max tweets reached" )
             return False
 
 	progress = (self.num_tweets / self.amount)*100
@@ -80,11 +83,13 @@ class StdOutListener(StreamListener):
     def on_error(self, status):
         print(status)
 
-def fetchTweets(amount):
+###############################################################################
+
+def fetchTweets(summaryRawTweets, amount):
     global maxAmount
     maxAmount = amount
     
-    l = StdOutListener()
+    l = StdOutListener(summaryRawTweets)
     aTok = AccessTokens("applicationTokens.json")
     auth = OAuthHandler(aTok.consumer_key, aTok.consumer_secret)
     auth.set_access_token(aTok.access_token, aTok.access_token_secret)
@@ -92,3 +97,5 @@ def fetchTweets(amount):
     EUROPE_BB=[-31.266001, 27.636311, 39.869301, 81.008797]
     WORLD_BB=[-180.0,-90.0,180.0,90.0]
     stream.filter(languages=["en"], locations=EUROPE_BB)
+
+###############################################################################

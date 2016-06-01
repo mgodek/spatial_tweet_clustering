@@ -30,8 +30,8 @@ class TweetsCoordinates:
         if isValid == True:
             if 'coordinates' in obj :
                 coor = obj['coordinates']
-		self.longitude = int(coor[0][0][0]) + 180
-		self.latitude = int(coor[0][0][1])  + 90
+		self.longitude = int(round(coor[0][0][0])) + 180
+		self.latitude = int(round(coor[0][0][1]))  + 90
             else:
 		self.isValid = False
 		print ('TweetsCoordinates fail: coordinates are wrong')
@@ -153,43 +153,46 @@ def tweetDecoder(obj):
 
 ###############################################################################
 
-def parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets):
+def parseData(onlySpdbData, summaryRawTweets, summaryParsedTweets):
     print( "Parsing raw data..." )
         
     removeFile(summaryParsedTweets)
     summaryfile = open(summaryParsedTweets, 'w')
 
-    for file in os.listdir(pathToRawTweets):
-        print( '{0}\r'.format("Parsing: %s" % file) ),
-	fullFileName = os.getcwd()+"/"+pathToRawTweets+"/"+file
-	fIn = open(fullFileName, 'r')
+    fIn = open(summaryRawTweets, 'r')
+
+    tweetCountAll = 0
+    tweetCountCorrect = 0
+    tweetCollection = fIn.read().splitlines()
+    for tweetString in tweetCollection:
+        tweetCountAll += 1
+        print( '{0}\r'.format("Parsing: %d" % tweetCountAll) ),
+
+        tweet = json.loads(tweetString)
 
 	try:
-	    tweet = tweetDecoder(json.load(fIn))
+	    tweetDecoded = tweetDecoder(tweet)
 	except ValueError, ve:
-	    print( "Decoding error ", json.dumps(fIn.read()) )
-            fIn.close()
-            removeFile(fullFileName)
+	    print( "Decoding error ", json.dumps(tweet) )
             continue
 
-	if tweet.isValid == False:
-	    print("Invalid object file: %s" % file)
+	if tweetDecoded.isValid == False:
+	    print("Invalid object file: %d" % tweetCountAll)
 	    try:
 	        print json.dump(tweet, indent=4, sort_keys=False)
 	    except TypeError, te:
-	        print( fIn.read() )
+	        #print( tweet )
+                continue
 
-            fIn.close()
-            removeFile(fullFileName)
             continue
 
-	fIn.close()
+        tweetCountCorrect += 1
 
 	#print( " %s " % tweet.toString() )
 	exclude = set(string.punctuation)
 
         # remove punctuations
-	tweetForStem = ''.join(ch for ch in tweet.toString() if ch not in exclude)
+	tweetForStem = ''.join(ch for ch in tweetDecoded.toString() if ch not in exclude)
 
         # discard unicode specific characters
         tweetForStemClean = ''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])
@@ -197,10 +200,12 @@ def parseData(onlySpdbData, pathToRawTweets, summaryParsedTweets):
         if onlySpdbData == True:
             tweetForStemClean = ' '.join(word for word in tweetForStemClean.split(' ') if word.startswith('spdb'))
 
-        summaryfile.write(file+" "+tweetForStemClean+'\n')
+        summaryfile.write(str(tweetDecoded.tweetId)+" "+tweetForStemClean+'\n')
+
+    fIn.close()
 
     # go to next line
-    print ("Parsed %d items                   " % len(os.listdir(pathToRawTweets)) )
+    print ("Parsed %d items with %d correct tweets." % (tweetCountAll, tweetCountCorrect) )
    
     summaryfile.close()
 
