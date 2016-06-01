@@ -209,8 +209,8 @@ def tfIdfTweetDataMenu():
 
 ###############################################################################
 
-def clusterTweetsNaiveMenu():
-    print ("Clustering tweets with Clara - naive approach !") 
+def clusterTweetsAllDataMenu():
+    print ("Clustering tweets with Clara using all available data") 
 
     print ( "Making matrix file" )
     makeTfidfMatrixFile(summaryTfidfTweets, tweetsMatrixFile)   
@@ -233,22 +233,17 @@ def clusterTweetsNaiveMenu():
 
 ###############################################################################
 
-def clusterTweetsLessNaiveMenu():
-    print ("Clustering tweets with Clara - less naive approach !")
-
-    global interactive
+def clusterTweetsCoordinatesMenu():
+    print ("Clustering tweets with Clara using only coordinate data")
 
     print ( "Making matrix file" )
     extractCoord(summaryParsedTweets, summaryParsedCoord)
     makeCoordMatrixFile(summaryParsedCoord, tweetsMatrixFile)
 
-    if interactive == True:
-        print ( "Calculate distances of tweets? y/n. Default n." )
-        choice = raw_input(" >>  ")
-        if choice == 'y':
-            similarityCoord(summaryParsedCoord, summarySimilarityCoord)
-    else:
-        similarityCoord(summaryParsedCoord, summarySimilarityCoord)
+    #print ( "Calculate distances of tweets? y/n. Default n." )
+    #choice = raw_input(" >>  ")
+    #if choice == 'y':
+    #    similarityCoord(summaryParsedCoord, summarySimilarityCoord)
 
     k = 7
     print ("How many clusters do You want to create? (default=%d)" % k )
@@ -271,7 +266,18 @@ def clusterTweetsLessNaiveMenu():
 def viewResultsMenu():
     print ("Viewing results !")
 
-    displayResultsOnMap(summaryParsedCoord, clusterLessNResultFile)
+    k = 0
+    print ("To see clustered coordinate data result only enter 0. 1 for the other. (default=%d)" % k )
+    kRead = raw_input(" >>  ")
+    try:
+        k = int(kRead)
+    except ValueError:
+        k = 0
+
+    if k == 0:
+        displayResultsOnMap(summaryParsedCoord, clusterLessNResultFile, "Tweets' coordinate data")
+    else:
+        displayResultsOnMap(summaryParsedCoord, clusterNaiveResultFile, "Tweets' all data")
 
     print ("9. Back")
     print ("0. Quit")
@@ -299,8 +305,8 @@ menu_actions = {
     '3': fetchTweetsPeriodicallyMenu,
     '4': parseTweetDataMenu,
     '5': tfIdfTweetDataMenu,
-    '6': clusterTweetsNaiveMenu,
-    '7': clusterTweetsLessNaiveMenu,
+    '6': clusterTweetsAllDataMenu,
+    '7': clusterTweetsCoordinatesMenu,
     '8': viewResultsMenu,
     '9': back,
     '0': exit,

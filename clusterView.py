@@ -8,7 +8,7 @@ from numpy import ndarray
 
 ###############################################################################
 
-def displayResultsOnMap(summaryParsedCoord, clusterResult):
+def displayResultsOnMap(summaryParsedCoord, clusterResult, title):
     print( "displayResultsOnMap" )
 
     #europeBB=[-31.266001, 27.636311, 39.869301, 81.008797]
@@ -87,21 +87,15 @@ def displayResultsOnMap(summaryParsedCoord, clusterResult):
         xpt,ypt = m(subCoordMat[:,2],subCoordMat[:,1])
         # convert back to lat/lon
         lonpt, latpt = m(xpt,ypt,inverse=True)
-        m.plot(xpt,ypt,colorsArray[i-1])  # plot a blue dot there
 
-    #m.plot(xpt-100000,ypt-100000,'ro')  # plot a red dot there
+        #print( "x=%f y=%f xpt=%f ypt=%f" % (x, y, xpt, ypt) )
+        m.plot(xpt,ypt,colorsArray[i-1])  # plot a point there
+
     # put some text next to the dot, offset a little bit
     # (the offset is in map projection coordinates)
     #plt.text(xpt+100000,ypt+100000,'Waw')
 
-    # draw tissot's indicatrix to show distortion.
-    #ax = plt.gca()
-    #for y in np.linspace(m.ymax/20,19*m.ymax/20,9):
-    #    for x in np.linspace(m.xmax/20,19*m.xmax/20,12):
-    #        lon, lat = m(x,y,inverse=True)
-    #        poly = m.tissot(lon,lat,1.5,100,\
-    #                        facecolor='green',zorder=10,alpha=0.5)
-    plt.title("Stereographic Projection")
+    plt.title(title)
     plt.show()
 
 ###############################################################################

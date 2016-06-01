@@ -12,7 +12,7 @@ import rpy2.robjects.packages as rpackages
 
 ###############################################################################
 
-packnames = ('cluster')
+packnames = ('cluster', 'tictoc')
 
 ###############################################################################
 
@@ -43,6 +43,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
     r_execClara = robjects.r('''
       library(Matrix)
       library(cluster)
+      library(tictoc)
       function(tweetsMatrixFile, k, outputFile) {
          coorMat <- read.table(tweetsMatrixFile) #'summaryClaraTweetsMatrixFile.txt'
 
@@ -55,7 +56,9 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          c <- as.numeric(t(coorMat[,2]))
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
+         tic()
          clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 0, medoids.x = TRUE, rngR = FALSE)
+         print(toc())
 
          #print(clarax[4])
 	 write.table(clarax[4],file=outputFile,sep = " ")
