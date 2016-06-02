@@ -76,7 +76,7 @@ def clusterResults(clusterLessNResultFile, clusterNaiveResultFile):
     print ( "Show clustering result" )
 
     r_execShowResults = robjects.r('''
-      library(mclust)
+      library(igraph)
       function(clusterLessNResultFile, clusterNaiveResultFile) {         
          clusterCoord = read.table(clusterLessNResultFile)
          clusterAll = read.table(clusterNaiveResultFile)
