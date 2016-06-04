@@ -26,8 +26,9 @@ dataFeatureFilePrefix     = 'dataTfidfFeatures'
 dataStopWordsPrefix       = 'dataTfidfStopWords'
 dataDictionaryFilePrefix  = 'dataTfidfDictionary'
 dataTweetsMatrixFilePrefix= "dataClaraTweetsMatrixFile"
-dataClusterFilePrefix     = "dataClaraOutput"
+dataClusterFilePrefix     = "dataClusteredOutput"
 dataClusterTypeInfixLength= 4
+dataMedoidsFilePrefix     = "dataMedoidsOutput"
 
 ###############################################################################
 
@@ -270,7 +271,9 @@ def clusterTweetsAllDataMenu():
 
     k = readInt("How many clusters do You want to create?", 7)
 
-    clusterClara(matrixFileName, k, dataClusterFilePrefix+"ALLD"+fileResults[len(dataParsedTweetsPrefix):])
+    clusterClara(matrixFileName, k,
+                 dataClusterFilePrefix+"ALLD"+fileResults[len(dataParsedTweetsPrefix):],
+                 dataMedoidsFilePrefix+"ALLD"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -299,7 +302,8 @@ def clusterTweetsCoordinatesMenu():
     k = readInt("How many clusters do You want to create?", 7)
 
     clusterClara(matrixFileName, k, 
-                 dataClusterFilePrefix+"COOR"+fileResults[len(dataParsedTweetsPrefix):])
+                 dataClusterFilePrefix+"COOR"+fileResults[len(dataParsedTweetsPrefix):],
+                 dataMedoidsFilePrefix+"COOR"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return

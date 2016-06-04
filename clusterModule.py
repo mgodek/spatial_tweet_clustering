@@ -32,14 +32,14 @@ def setupCluster():
 
 ###############################################################################
 
-def clusterClara(tweetsMatrixFile, k, outputFile):
+def clusterClara(tweetsMatrixFile, k, outputClusterFile, outputMedoidFile):
     print ( "Clara with ", k, " groups" )
 
     r_execClara = robjects.r('''
       library(Matrix)
       library(cluster)
       library(tictoc)
-      function(tweetsMatrixFile, k, outputFile) {
+      function(tweetsMatrixFile, k, outputClusterFile, outputMedoidFile) {
          coorMat <- read.table(tweetsMatrixFile)
 
          r <- as.numeric(t(coorMat[,1]))
@@ -47,18 +47,19 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
          tic()
-         clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 0, medoids.x = TRUE, rngR = FALSE)
+         clarax <- clara(matSp, k, metric = "euclidean", stand = TRUE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 4, medoids.x = TRUE, rngR = FALSE)
          print(toc())
 
          #print(clarax[4])
-	 write.table(clarax[4],file=outputFile,sep = " ")
+	 write.table(clarax[4],file=outputClusterFile,sep = " ")
+	 write.table(clarax[2],file=outputMedoidFile,sep = " ")
          #plot(clarax)
          print(clarax)
       }
     ''')
     
-    r_execClara(tweetsMatrixFile, k, outputFile)
-    print( "Saved results to %s" % outputFile ) 
+    r_execClara(tweetsMatrixFile, k, outputClusterFile, outputMedoidFile)
+    print( "Saved results to %s %s" % (outputClusterFile,outputMedoidFile) ) 
     return
 
 ###############################################################################
