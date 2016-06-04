@@ -153,11 +153,11 @@ def tweetDecoder(obj):
 
 ###############################################################################
 
-def parseData(onlySpdbData, summaryRawTweets, summaryParsedTweets):
+def parseData(onlySpdbData, summaryRawTweets, parsedTweetsFileName):
     print( "Parsing raw data..." )
         
-    removeFile(summaryParsedTweets)
-    summaryfile = open(summaryParsedTweets, 'w')
+    removeFile(parsedTweetsFileName)
+    summaryfile = open(parsedTweetsFileName, 'w')
 
     fIn = open(summaryRawTweets, 'r')
 
@@ -206,42 +206,44 @@ def parseData(onlySpdbData, summaryRawTweets, summaryParsedTweets):
 
     # go to next line
     print ("Parsed %d items with %d correct tweets." % (tweetCountAll, tweetCountCorrect) )
-   
+
     summaryfile.close()
+    print("Parsed result saved to '%s'" % parsedTweetsFileName )
 
 ###############################################################################
 
-def stemData(summaryParsedTweets, summaryStemmedTweets):
+def stemData(summaryParsedTweets, stemmedTweetsFileName):
     print( "Stemming parsed data..." )
 
-    removeFile(summaryStemmedTweets)
+    removeFile(stemmedTweetsFileName)
 
     # run C code for stemming
     from ctypes import cdll
     lib = cdll.LoadLibrary('./cmake_stemmer/libstemmer.so')
 
-    ret = lib.stem(summaryParsedTweets, summaryStemmedTweets)
+    ret = lib.stem(summaryParsedTweets, stemmedTweetsFileName)
     #print( "stem success: ", ret==0 )
+    print("Stemmed result saved to '%s'" % stemmedTweetsFileName )
 
 ###############################################################################
 
-def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
+def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords,
               dictionaryFile, thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio):
     print( "TFIDFing stemmed data..." )
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
     removeFile(dictionaryFile)
 
-    fIn = open(summaryStemmedTweets, 'r')
+    fIn = open(stemmedTweetsFileName, 'r')
     lineCount = 0
     for line in fIn:
         lineCount = lineCount + 1
     fIn.close()
 
-    stemFileReduced = "summaryStemFileReduced.txt"
+    stemFileReduced = "dataStemFileReduced.txt" # TODO drop reduce?
     removeFile(stemFileReduced)
-    fOut = open(stemFileReduced, 'w')
     if sampleRatio < 1:
+        fOut = open(stemFileReduced, 'w')
         outputSetSize = int(lineCount*sampleRatio)
         print( "Desired tweet set size %d" % outputSetSize )
         lineSet = random.sample(range(1,lineCount,1), outputSetSize)
@@ -271,14 +273,14 @@ def tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
 	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut)
 
     tfidf = TFIDF()
-    tfidf.preRun(summaryStemmedTweets, summaryTfidfTweets, c_double(thresholdUpper), c_double(thresholdBottom), c_uint(stopWordCountBottom), summaryStopWords)
+    tfidf.preRun(stemmedTweetsFileName, summaryTfidfTweets, c_double(thresholdUpper), c_double(thresholdBottom), c_uint(stopWordCountBottom), summaryStopWords)
 
     tfidf = TFIDF()
-    tfidf.run(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords, dictionaryFile)
+    tfidf.run(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dictionaryFile)
     
     removeFile(stemFileReduced)
 
-    bashCommand = "wc -l summaryTfidfDictionary.txt"
+    bashCommand = "wc -l dataTfidfDictionary.txt" # TODO
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
     print( "TFIDF resulted features size is %s " % (output) )
@@ -317,12 +319,12 @@ def makeClusterMatrixFile(summaryData, tweetsMatrixFile):
 
 ###############################################################################
 
-def extractCoord(summaryParsedTweets, summaryParsedCoord):
-    print( "Extracting coordinate data..." )
-    removeFile(summaryParsedCoord)
+def extractCoord(dataParsedTweetsFilename, dataParsedCoordFilename):
+    print( "Extracting coordinate data... %s" % dataParsedTweetsFilename )
+    removeFile(dataParsedCoordFilename)
 
-    fOut = open(summaryParsedCoord, 'w')
-    fIn = open(summaryParsedTweets, 'r')
+    fOut = open(dataParsedCoordFilename, 'w')
+    fIn = open(dataParsedTweetsFilename, 'r')
 
     for line in fIn:
         #get json name

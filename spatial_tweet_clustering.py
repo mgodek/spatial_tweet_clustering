@@ -13,18 +13,54 @@ from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile
 from clusterModule import setupCluster, clusterClara, clusterResults
 from time import gmtime, strftime
 from similarity import similarityCoord
+import re
+import time
 
-summaryRawTweets       = 'summaryRawTweets.txt'
-summarySimilarityCoord = 'summarySimilarityCoord.txt'
-summaryParsedCoord     = 'summaryParsedCoord.txt'
-summaryParsedTweets    = 'summaryParsedTweets.txt'
-summaryStemmedTweets   = 'summaryStemmedTweets.txt'
-summaryTfidfTweets     = 'summaryTfidfTweets.txt'
-summaryStopWords       = 'summaryTfidfStopWords.txt'
-summaryDictionaryFile  = 'summaryTfidfDictionary.txt'
-tweetsMatrixFile       = "summaryClaraTweetsMatrixFile.txt"  # matrix with each row being a set of weights (column position indicated feature)
-clusterNaiveResultFile = "claraOutputNaive.txt"
-clusterLessNResultFile = "claraOutputLessN.txt"
+dataRawTweetsPrefix       = 'dataRawTweets'
+dataSimilarityCoordPrefix = 'dataSimilarityCoord'
+dataParsedCoordPrefix     = 'dataParsedCoord'
+dataParsedTweetsPrefix    = 'dataParsedTweets'
+dataStemmedTweetsPrefix   = 'dataStemmedTweets'
+dataTfidfTweetsPrefix     = 'dataTfidfTweets'
+dataStopWordsPrefix       = 'dataTfidfStopWords'
+dataDictionaryFilePrefix  = 'dataTfidfDictionary'
+dataTweetsMatrixFilePrefix= "dataClaraTweetsMatrixFile"
+dataClusterFilePrefix     = "dataClaraOutput"
+
+###############################################################################
+
+def readStr(message, defaultStr):
+    value = raw_input("%s >> %s" % (message, defaultStr))
+    try:
+        return defaultStr+str(value)
+    except ValueError:
+        return defaultStr
+
+###############################################################################
+
+def readInt(message, defaultInt):
+    value = raw_input("%s default=%d >> " % (message, defaultInt))
+    try:
+        return int(value)
+    except ValueError:
+        return defaultInt
+
+###############################################################################
+
+def readFileName(message, defaultFileNamePrefix):
+    newFileName = defaultFileNamePrefix
+    filePrefixCollection = []
+    for file in os.listdir(os.getcwd()):
+        if defaultFileNamePrefix in file:
+            filePrefixCollection.append(file)
+    if len(filePrefixCollection) > 0:
+        print( "Existing: %s" % ', '.join(filePrefixCollection) )
+
+    newFileName = readStr(message, newFileName)
+    try:
+        return defaultFileNamePrefix+str(newFileName)
+    except ValueError:
+        return defaultFileNamePrefix
 
 ###############################################################################
 
@@ -89,24 +125,11 @@ def setup():
 ###############################################################################
 
 def fetchTweetsMenu():
-    amount = 30000
-    print ("How much tweets to fetch? default=%d " % amount )
-    amountRead = raw_input(" >>  ")
-    try:
-        amount = int(amountRead)
-    except ValueError:
-        amount = 30000
+    newRawTweetsName = readFileName("How to name the tweet file?", dataRawTweetsPrefix)
 
-    removeOldTweets = "n"
-    print ("Remove previous tweets? y/n default=%s " % removeOldTweets )
-    removeOldTweets = raw_input(" >>  ")
-    if removeOldTweets == "y":
-        removeFile(summaryRawTweets)
-
-    print ("Fetching ", amount, " tweets !")
-    
+    amount = readInt("How much tweets to fetch?", 30000)
     try:
-        tweetFetcher.fetchTweets(summaryRawTweets, amount)
+        tweetFetcher.fetchTweets(newRawTweetsName, amount)
     except KeyboardInterrupt, e:
         print( "Interrupted" )
     
@@ -116,46 +139,75 @@ def fetchTweetsMenu():
 ###############################################################################
  
 def fetchTweetsPeriodicallyMenu():
-    amount = 20000
+    newRawTweetsName = dataRawTweetsPrefix
+    rawDataCollection = []
+    for file in os.listdir(os.getcwd()):
+        if dataRawTweetsPrefix in file:
+            rawDataCollection.append(file)
+    if len(rawDataCollection) > 0:
+        print( "Existing: %s" % ', '.join(rawDataCollection) )
+    newRawTweetName = readStr("How to name the tweet file?", newRawTweetsName)
+
+    amount = readInt("How much tweets to fetch?", 10000)
     hours = 1
     times = 12
-    print ("Fetching ", amount, " tweets periodically every ", hours, " hours!")
+    print ("Fetching ", amount, " tweets periodically every ", hours, " hour.")
     strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
-    removeFile(summaryRawTweets)
-
     for x in range(1, times):
+        start = time.time()
         print( "Round ", x, " out of ", times )
         try:
-            tweetFetcher.fetchTweets(summaryRawTweets, amount)
+            tweetFetcher.fetchTweets(newRawTweetName, amount)
         except KeyboardInterrupt, e:
             print( "Interrupted" )
 
+        waitTime = 3600*hours - (time.time() - start)
 	if x + 1 < times:
-            print( "Waiting ", hours, " hours for round ", x+1, " out of ", times )
-            time.sleep(3600*hours)
-
+            print( "Waiting ", float(int(waitTime/36))/100, " hours for next round ", x+1, " out of ", times )
+            time.sleep(waitTime)
 
     main_menu()
     return
 
 ###############################################################################
 
+def chooseFile(fileNamePrefix, action):
+    dataCollection = []
+    for file in os.listdir(os.getcwd()):
+        if fileNamePrefix in file:
+            dataCollection.append(file)
+
+    if len(dataCollection) == 0:
+        print( "No data with prefix %s available. Early return." % fileNamePrefix )
+        return
+
+    dataCollectionArrayStr = ""
+    for i in range(0,len(dataCollection)):
+        dataCollectionArrayStr += ("[" + str(i) + "]" + dataCollection[i] + " ")
+    i = readInt(str("Which do You want to %s? %s" % (action, dataCollectionArrayStr)), 0)
+    return dataCollection[i]
+
+###############################################################################
+
 def parseTweetDataMenu():
-    print ( "Parsing and stemming raw json tweets" )
+    rawDataCollection = []
+    for file in os.listdir(os.getcwd()):
+        if dataRawTweetsPrefix in file:
+            rawDataCollection.append(file)
 
-    global interactive
-
-    onlySpdbData = False
+    rawTweetsFileName = chooseFile(dataRawTweetsPrefix, "parse")
 
     #print ( "Use only location data? y/n. Default n." )
     #choice = raw_input(" >>  ")
     #if choice == 'y':
     #     onlySpdbData = True
 
-    parseData(onlySpdbData, summaryRawTweets, summaryParsedTweets)
+    onlySpdbData = False
+    parsedTweetsFileName = dataParsedTweetsPrefix+(rawTweetsFileName[len(dataRawTweetsPrefix):])
+    parseData(onlySpdbData, rawTweetsFileName, parsedTweetsFileName)
 
-    stemData(summaryParsedTweets, summaryStemmedTweets)
+    stemData(parsedTweetsFileName, dataStemmedTweetsPrefix+(parsedTweetsFileName[len(dataParsedTweetsPrefix):]))
 
     main_menu()
     return
@@ -163,7 +215,7 @@ def parseTweetDataMenu():
 ###############################################################################
 
 def tfIdfTweetDataMenu():
-    print ( "Tfidfing parsed json tweets to R input" )
+    stemmedTweetsFileName = chooseFile(dataStemmedTweetsPrefix, "tfidf")
 
     global interactive
 
@@ -192,10 +244,11 @@ def tfIdfTweetDataMenu():
         if choice != '':
             sampleRatio=float(choice)
 
-
-    tfidfData(summaryStemmedTweets, summaryTfidfTweets, summaryStopWords,
-              summaryDictionaryFile, thresholdUpper, thresholdBottom,
-              stopWordCountBottom, sampleRatio)
+    tfidfData(stemmedTweetsFileName,
+              dataTfidfTweetsPrefix   +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
+              dataStopWordsPrefix     +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
+              dataDictionaryFilePrefix+stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
+              thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio)
 
     main_menu()
     return
@@ -204,19 +257,17 @@ def tfIdfTweetDataMenu():
 
 def clusterTweetsAllDataMenu():
     print ("Clustering tweets with Clara using all available data") 
+    fileResults = chooseFile(dataParsedTweetsPrefix, "cluster results" )
+    if len(fileResults) == 0:
+        return
 
     print ( "Making matrix file" )
-    makeClusterMatrixFile('summaryFeatures.txt', tweetsMatrixFile)   
+    matrixFileName = dataTweetsMatrixFilePrefix+fileResults[len(dataParsedTweetsPrefix):]
+    makeClusterMatrixFile('summaryFeatures.txt', matrixFileName) # TODO file rename
 
-    k = 7
-    print ("How many clusters do You want to create? (default=%d)" % k )
-    kRead = raw_input(" >>  ")
-    try:
-        k = int(kRead)
-    except ValueError:
-        k = 7
+    k = readInt("How many clusters do You want to create?", 7)
 
-    clusterClara(tweetsMatrixFile, k, clusterNaiveResultFile)
+    clusterClara(matrixFileName, k, dataClusterFilePrefix+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -225,25 +276,27 @@ def clusterTweetsAllDataMenu():
 
 def clusterTweetsCoordinatesMenu():
     print ("Clustering tweets with Clara using only coordinate data")
+    fileResults = chooseFile(dataParsedTweetsPrefix, "cluster results" )
+    if len(fileResults) == 0:
+        return
 
     print ( "Making matrix file" )
-    extractCoord(summaryParsedTweets, summaryParsedCoord)
-    makeClusterMatrixFile(summaryParsedCoord, tweetsMatrixFile)
+    extractCoord(fileResults, 
+                 dataParsedCoordPrefix +fileResults[len(dataParsedTweetsPrefix):])
+
+    matrixFileName = dataTweetsMatrixFilePrefix+fileResults[len(dataParsedTweetsPrefix):]
+    makeClusterMatrixFile(dataParsedCoordPrefix+fileResults[len(dataParsedTweetsPrefix):], 
+                          matrixFileName)
 
     #print ( "Calculate distances of tweets? y/n. Default n." )
     #choice = raw_input(" >>  ")
     #if choice == 'y':
     #    similarityCoord(summaryParsedCoord, summarySimilarityCoord)
 
-    k = 7
-    print ("How many clusters do You want to create? (default=%d)" % k )
-    kRead = raw_input(" >>  ")
-    try:
-        k = int(kRead)
-    except ValueError:
-        k = 7
+    k = readInt("How many clusters do You want to create?", 7)
 
-    clusterClara(tweetsMatrixFile, k, clusterLessNResultFile)
+    clusterClara(matrixFileName, k, 
+                 dataClusterFilePrefix+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -251,20 +304,11 @@ def clusterTweetsCoordinatesMenu():
 ###############################################################################
 
 def viewResultsMenu():
-    print ("Viewing results !")
+    fileResults = chooseFile(dataClusterFilePrefix, "view results" )
+    if len(fileResults) == 0:
+        return
 
-    k = 0
-    print ("To see clustered coordinate data result only enter 0. 1 for the other. (default=%d)" % k )
-    kRead = raw_input(" >>  ")
-    try:
-        k = int(kRead)
-    except ValueError:
-        k = 0
-
-    if k == 0:
-        displayResultsOnMap(summaryParsedCoord, clusterLessNResultFile, "Tweets' coordinate data")
-    else:
-        displayResultsOnMap(summaryParsedCoord, clusterNaiveResultFile, "Tweets' all data")
+    displayResultsOnMap(dataParsedCoordPrefix+fileResults[len(dataClusterFilePrefix):], fileResults, "Tweets' coordinate data")
 
     main_menu()
     return
@@ -272,7 +316,7 @@ def viewResultsMenu():
 ###############################################################################
 
 def viewRandMenu():
-    clusterResults(clusterLessNResultFile, clusterNaiveResultFile)
+    clusterResults(dataClusterLessNResultFilePrefix, dataClusterNaiveResultFilePrefix)
     main_menu()
     return
 
@@ -310,6 +354,9 @@ if __name__ == "__main__":
     for x in sys.argv[1:]:
         if x == "i":
             interactive = True
+        if x == "init":
+            setupCluster()
+            exit()
 
     main_menu()
 

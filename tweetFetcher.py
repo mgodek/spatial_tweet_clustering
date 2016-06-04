@@ -35,14 +35,18 @@ class AccessTokens:
         #fd.close()
         
         #read from json
-        with open(tokenFileName) as json_file:
-            json_data = json.load(json_file)
-            #print(json_data)
-            self.consumer_key=json_data["consumer_key"]
-            self.consumer_secret=json_data["consumer_secret"]
-            self.access_token=json_data["access_token"]
-            self.access_token_secret=json_data["access_token_secret"]
-            print(self.__dict__)
+        try:
+            with open(tokenFileName) as json_file:
+                json_data = json.load(json_file)
+                #print(json_data)
+                self.consumer_key=json_data["consumer_key"]
+                self.consumer_secret=json_data["consumer_secret"]
+                self.access_token=json_data["access_token"]
+                self.access_token_secret=json_data["access_token_secret"]
+                #print(self.__dict__)
+        except IOError:
+            print("Missing consumer credentials and access tokens.")
+            raise
 
 ###############################################################################
 

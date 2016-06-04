@@ -17,23 +17,20 @@ packnames = ('cluster', 'tictoc', 'igraph')
 ###############################################################################
 
 def setupCluster():
-    if all(rpackages.isinstalled(x) for x in packnames):
-        have_packages = True
-    else:
-        have_packages = False
+    # import R's utility package
+    utils = rpackages.importr('utils')
+    # select a mirror for R packages
+    utils.chooseCRANmirror(ind=1) # select the first mirror in the list
 
-    if not have_packages:
-        # import R's utility package
-        utils = rpackages.importr('utils')
-        # select a mirror for R packages
-        utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+    for x in packnames:
+        if not rpackages.isinstalled(x):
+            utils.install_packages(x)
+            print ( "installing ", x )
 
-    if not have_packages:
-        # file
-        packnames_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-        if len(packnames_to_install) > 0:
-            utils.install_packages(StrVector(packnames))
-            print ( "installing ", packnames )
+#TODO in case lgfortran is missing make sure these have same version ?
+#gcc --version
+#gfortran --version
+
 
 ###############################################################################
 
@@ -62,7 +59,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
 
          #print(clarax[4])
 	 write.table(clarax[4],file=outputFile,sep = " ")
-         plot(clarax)
+         #plot(clarax)
          print(clarax)
       }
     ''')

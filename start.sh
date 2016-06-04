@@ -2,6 +2,8 @@
 
 R --version
 
+sudo apt-get install gfortran
+sudo apt-get install r-base-dev
 sudo pip install numpy
 
 #install matplotlib dependencies
@@ -39,11 +41,4 @@ cmake ../libstemmer_c
 make
 cd ..
 
-FILE="tweets.tar.gz"
-echo "Now manually create a directory named 'tweets' in which will be *.json tweets"
-#if [ -f $FILE ];
-#then
-#    rm -rf tweets/*
-#    tar -zxvf $FILE >/dev/null 2>&1
-#    rm $FILE
-#fi
+sudo python spatial_tweet_clustering.py init
