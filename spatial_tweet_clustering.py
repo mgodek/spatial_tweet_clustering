@@ -12,7 +12,7 @@ from clusterView import displayResultsOnMap
 from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile, extractCoord, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResultsRandIdx
 from time import gmtime, strftime
-from similarity import similarityCoord
+from similarity import similarityCoord, distanceMedoid, distanceSqrLongPlusLat
 import re
 import time
 
@@ -150,7 +150,7 @@ def fetchTweetsMenu():
 
     amount = readInt("How much tweets to fetch?", 30000)
     times = readInt("How many times to repeat?", 1)
-    hours = readInt("How many hours to wait in between?", 1)
+    hours = readInt("How many hours to wait in between?", 0)
     print ("Fetching %d times %d tweets periodically every %d hours." % (times, amount, hours))
     strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
@@ -161,6 +161,9 @@ def fetchTweetsMenu():
             tweetFetcher.fetchTweets(newRawTweetsName, amount)
         except KeyboardInterrupt, e:
             print( "Interrupted" )
+
+        if hours == 0:
+            continue
 
         waitTime = 3600*hours - (time.time() - start)
 	if x + 1 < times:
@@ -268,9 +271,52 @@ def clusterTweetsLocTextMenu():
     if len(fileResults) == 0:
         return
 
-   #TODO
+    ############################# COORD
+
+    inputFileName = dataParsedCoordPrefix+fileResults[len(dataParsedTweetsPrefix):]
+    medoidFileName = dataMedoidsFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+
+    print ( "Making matrix file for getting coordinate medoids from clustering" )
+    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+    makeClusterMatrixFile(inputFileName, matrixFileName)
+
+    # hardcode value of medoids. Higher means more presicion in distances
+    medoidCountPreClustering = 10
+    clusterClara(matrixFileName, medoidCountPreClustering,
+                 dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
+                 medoidFileName)
+    distanceFileName = "dataDistanceFileNameCoord_7_" #TODO use name prefix convention
+    distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+    #distanceSqrLongPlusLat(inputFileName,distanceFileName)
+    # normalize after
+
+    ############################# COORD
+
+    ############################# TEXT
+
+    inputFileName = dataFeatureFilePrefix+fileResults[len(dataParsedTweetsPrefix):]
+    medoidFileName = dataMedoidsFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+
+    print ( "Making matrix file for getting coordinate medoids from clustering" )
+    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+    makeClusterMatrixFile(inputFileName, matrixFileName)
+
+    # hardcode value of medoids. Higher means more presicion in distances
+    medoidCountPreClustering = 30
+    clusterClara(matrixFileName, medoidCountPreClustering,
+                 dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
+                 medoidFileName)
+    #distanceFileName = "dataDistanceFileNameText_7_" #TODO use name prefix convention
+    # normalize before
+    #distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+
+    ############################# TEXT
 
     k = readInt("How many clusters do You want to create?", 7)
+
+    # create matrix file for coords
+    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+    makeClusterMatrixFile(distanceFileName, matrixFileName) # TODO concatenate columns from 2 files distanceFileName
 
     clusterClara(matrixFileName, k,
                  dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],

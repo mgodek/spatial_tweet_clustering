@@ -9,6 +9,7 @@ from rpy2.robjects.vectors import StrVector
 import rpy2.robjects.numpy2ri
 from numpy import array
 import rpy2.robjects.packages as rpackages
+from tweetTransform import removeFile
 
 ###############################################################################
 
@@ -35,6 +36,9 @@ def setupCluster():
 def clusterClara(tweetsMatrixFile, k, outputClusterFile, outputMedoidFile):
     print ( "Clara with ", k, " groups" )
 
+    removeFile(outputClusterFile)
+    removeFile(outputMedoidFile)
+
     r_execClara = robjects.r('''
       library(Matrix)
       library(cluster)
@@ -47,7 +51,7 @@ def clusterClara(tweetsMatrixFile, k, outputClusterFile, outputMedoidFile):
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
          tic()
-         clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 4, medoids.x = TRUE, rngR = FALSE)
+         clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 0, medoids.x = TRUE, rngR = FALSE)
          print(toc())
 
          #print(clarax[4])
