@@ -288,7 +288,7 @@ def clusterTweetsLocTextMenu():
     distanceFileName = "dataDistanceFileNameCoord_7_" #TODO use name prefix convention
     distanceMedoid(inputFileName, medoidFileName, distanceFileName)
     #distanceSqrLongPlusLat(inputFileName,distanceFileName)
-    # normalize after
+    # TODO normalize after
 
     ############################# COORD
 
@@ -306,9 +306,9 @@ def clusterTweetsLocTextMenu():
     clusterClara(matrixFileName, medoidCountPreClustering,
                  dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
                  medoidFileName)
-    #distanceFileName = "dataDistanceFileNameText_7_" #TODO use name prefix convention
-    # normalize before
-    #distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+    distanceFileName = "dataDistanceFileNameText_7_" #TODO use name prefix convention
+    # TODO normalize before
+    distanceMedoid(inputFileName, medoidFileName, distanceFileName)
 
     ############################# TEXT
 
