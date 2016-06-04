@@ -12,7 +12,7 @@ import rpy2.robjects.packages as rpackages
 
 ###############################################################################
 
-packnames = ('cluster', 'tictoc', 'igraph')
+packnames = ('cluster', 'tictoc', 'fossil')
 
 ###############################################################################
 
@@ -27,9 +27,7 @@ def setupCluster():
             utils.install_packages(x)
             print ( "installing ", x )
 
-#TODO in case lgfortran is missing make sure these have same version ?
-#gcc --version
-#gfortran --version
+    print( "In case lgfortran is missing make sure these have same used version of gcc, g++ and gfortran" )
 
 
 ###############################################################################
@@ -65,19 +63,19 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
 
 ###############################################################################
 
-def clusterResultsRandIdx(clusterLessNResultFile, clusterNaiveResultFile):
+def clusterResultsRandIdx(clusterResult1, clusterResult2):
     print ( "Show clustering result" )
 
     r_execShowResults = robjects.r('''
-      library(igraph)
-      function(clusterLessNResultFile, clusterNaiveResultFile) {         
-         clusterCoord = read.table(clusterLessNResultFile)
-         clusterAll = read.table(clusterNaiveResultFile)
-         randIdx = compare(clusterCoord[,1],clusterAll[,1], "rand")
+      library(fossil)
+      function(clusterResult1, clusterResult2) {         
+         clusterData1 = read.table(clusterResult1)
+         clusterData2 = read.table(clusterResult2)
+         randIdx = rand.index(clusterData1[,1],clusterData2[,1])
          print(randIdx)
      }
     ''')
-    r_execShowResults(clusterLessNResultFile,clusterNaiveResultFile)
+    r_execShowResults(clusterResult1,clusterResult2)
     return
 
 ###############################################################################

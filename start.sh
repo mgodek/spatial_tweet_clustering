@@ -2,7 +2,6 @@
 
 R --version
 
-sudo apt-get install gfortran
 sudo apt-get install r-base-dev
 sudo pip install numpy
 
