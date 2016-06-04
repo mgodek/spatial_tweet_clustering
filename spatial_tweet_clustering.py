@@ -300,8 +300,8 @@ def clusterTweetsCoordinatesMenu():
     k = readInt("How many clusters do You want to create?", 7)
 
     clusterClara(matrixFileName, k, 
-                 dataClusterFilePrefix+"5"+fileResults[len(dataParsedTweetsPrefix):],
-                 dataMedoidsFilePrefix+"5"+fileResults[len(dataParsedTweetsPrefix):])
+                 dataClusterFilePrefix+"_5_"+fileResults[len(dataParsedTweetsPrefix):],
+                 dataMedoidsFilePrefix+"_5_"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return

@@ -47,7 +47,7 @@ def clusterClara(tweetsMatrixFile, k, outputClusterFile, outputMedoidFile):
          v <- as.numeric(t(coorMat[,3]))
          matSp <- sparseMatrix(i=r,j=c,x=v, dims=c(max(r),max(c)))
          tic()
-         clarax <- clara(matSp, k, metric = "euclidean", stand = TRUE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 4, medoids.x = TRUE, rngR = FALSE)
+         clarax <- clara(matSp, k, metric = "euclidean", stand = FALSE, samples = 50, sampsize = min(max(r), 40 + 2 * k), trace = 4, medoids.x = TRUE, rngR = FALSE)
          print(toc())
 
          #print(clarax[4])
