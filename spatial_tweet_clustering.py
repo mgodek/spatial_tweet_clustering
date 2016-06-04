@@ -27,7 +27,7 @@ dataStopWordsPrefix       = 'dataTfidfStopWords'
 dataDictionaryFilePrefix  = 'dataTfidfDictionary'
 dataTweetsMatrixFilePrefix= "dataClaraTweetsMatrixFile"
 dataClusterFilePrefix     = "dataClusteredOutput"
-dataClusterTypeInfixLength= 4
+dataClusterTypeInfixLength= 3
 dataMedoidsFilePrefix     = "dataMedoidsOutput"
 
 ###############################################################################
@@ -61,9 +61,27 @@ def readFileName(message, defaultFileNamePrefix):
 
     newFileName = readStr(message, newFileName)
     try:
-        return defaultFileNamePrefix+str(newFileName)
+        return str(newFileName)
     except ValueError:
         return defaultFileNamePrefix
+
+###############################################################################
+
+def chooseFile(fileNamePrefix, action):
+    dataCollection = []
+    for file in os.listdir(os.getcwd()):
+        if fileNamePrefix in file:
+            dataCollection.append(file)
+
+    if len(dataCollection) == 0:
+        print( "No data with prefix %s available. Early return." % fileNamePrefix )
+        return
+
+    dataCollectionArrayStr = ""
+    for i in range(0,len(dataCollection)):
+        dataCollectionArrayStr += ("[" + str(i) + "]" + dataCollection[i] + " ")
+    i = readInt(str("Which do You want to %s? %s" % (action, dataCollectionArrayStr)), 0)
+    return dataCollection[i]
 
 ###############################################################################
 
@@ -80,11 +98,11 @@ def main_menu():
     print ("Please choose the function you want to start:")
     print ("1. Run setup")
     print ("2. Fetch tweets")
-    print ("3. Fetch tweets periodically")
-    print ("4. Parse and stem tweets")
-    print ("5. Tfidf stemmed tweets")
-    print ("6. Cluster tweets using all data")
-    print ("7. Cluster tweets using location data")
+    print ("3. Parse and stem tweets")
+    print ("4. Tfidf stemmed tweets")
+    print ("5. Cluster tweets using only location data")
+    print ("6. Cluster tweets using all data in same way")
+    print ("7. Cluster tweets using location and text")
     print ("8. View results")
     print ("9. View Rand Index")
     print ("0. Quit")
@@ -131,65 +149,26 @@ def fetchTweetsMenu():
     newRawTweetsName = readFileName("How to name the tweet file?", dataRawTweetsPrefix)
 
     amount = readInt("How much tweets to fetch?", 30000)
-    try:
-        tweetFetcher.fetchTweets(newRawTweetsName, amount)
-    except KeyboardInterrupt, e:
-        print( "Interrupted" )
-    
-    main_menu()
-    return
-
-###############################################################################
- 
-def fetchTweetsPeriodicallyMenu():
-    newRawTweetsName = dataRawTweetsPrefix
-    rawDataCollection = []
-    for file in os.listdir(os.getcwd()):
-        if dataRawTweetsPrefix in file:
-            rawDataCollection.append(file)
-    if len(rawDataCollection) > 0:
-        print( "Existing: %s" % ', '.join(rawDataCollection) )
-    newRawTweetName = readStr("How to name the tweet file?", newRawTweetsName)
-
-    amount = readInt("How much tweets to fetch?", 10000)
-    hours = 1
-    times = 12
-    print ("Fetching ", amount, " tweets periodically every ", hours, " hour.")
+    times = readInt("How many times to repeat?", 1)
+    hours = readInt("How many hours to wait in between?", 1)
+    print ("Fetching %d times %d tweets periodically every %d hours." % (times, amount, hours))
     strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
-    for x in range(1, times):
+    for x in range(0, times):
         start = time.time()
-        print( "Round ", x, " out of ", times )
+        print( "Round ", x+1, " out of ", times )
         try:
-            tweetFetcher.fetchTweets(newRawTweetName, amount)
+            tweetFetcher.fetchTweets(newRawTweetsName, amount)
         except KeyboardInterrupt, e:
             print( "Interrupted" )
 
         waitTime = 3600*hours - (time.time() - start)
 	if x + 1 < times:
-            print( "Waiting ", float(int(waitTime/36))/100, " hours for next round ", x+1, " out of ", times )
+            print( "Waiting ", float(int(waitTime/36))/100, " hours for next round ", x+2, " out of ", times )
             time.sleep(waitTime)
-
+    
     main_menu()
     return
-
-###############################################################################
-
-def chooseFile(fileNamePrefix, action):
-    dataCollection = []
-    for file in os.listdir(os.getcwd()):
-        if fileNamePrefix in file:
-            dataCollection.append(file)
-
-    if len(dataCollection) == 0:
-        print( "No data with prefix %s available. Early return." % fileNamePrefix )
-        return
-
-    dataCollectionArrayStr = ""
-    for i in range(0,len(dataCollection)):
-        dataCollectionArrayStr += ("[" + str(i) + "]" + dataCollection[i] + " ")
-    i = readInt(str("Which do You want to %s? %s" % (action, dataCollectionArrayStr)), 0)
-    return dataCollection[i]
 
 ###############################################################################
 
@@ -208,9 +187,18 @@ def parseTweetDataMenu():
 
     onlySpdbData = False
     parsedTweetsFileName = dataParsedTweetsPrefix+(rawTweetsFileName[len(dataRawTweetsPrefix):])
-    parseData(onlySpdbData, rawTweetsFileName, parsedTweetsFileName)
 
-    stemData(parsedTweetsFileName, dataStemmedTweetsPrefix+(parsedTweetsFileName[len(dataParsedTweetsPrefix):]))
+    parseData(onlySpdbData, rawTweetsFileName, parsedTweetsFileName+"_noSPDB", False)
+    stemData(parsedTweetsFileName+"_noSPDB", dataStemmedTweetsPrefix+parsedTweetsFileName[len(dataParsedTweetsPrefix):]+"_noSPDB")
+
+    parseData(onlySpdbData, rawTweetsFileName, parsedTweetsFileName+"_withSPDB", True)
+    stemData(parsedTweetsFileName+"_withSPDB", dataStemmedTweetsPrefix+parsedTweetsFileName[len(dataParsedTweetsPrefix):]+"_withSPDB")
+
+    # run it twice to have 2 file for each branch: with and without SPDB prefix
+    extractCoord(parsedTweetsFileName+"_withSPDB", 
+                 dataParsedCoordPrefix+parsedTweetsFileName[len(dataParsedTweetsPrefix):]+"_withSPDB")
+    extractCoord(parsedTweetsFileName+"_withSPDB", 
+                 dataParsedCoordPrefix+parsedTweetsFileName[len(dataParsedTweetsPrefix):]+"_noSPDB")
 
     main_menu()
     return
@@ -225,7 +213,6 @@ def tfIdfTweetDataMenu():
     thresholdBottom = float(0.01)
     thresholdUpper  = float(100)
     stopWordCountBottom = 17
-    sampleRatio = 1.0
     if interactive == True:
         print ( "Specify threshold bottom? default=%s. Enter 0 to turn it off." % str(thresholdBottom) )
         choice = raw_input(" >>  ")
@@ -242,17 +229,12 @@ def tfIdfTweetDataMenu():
         if choice != '':
             stopWordCountBottom=int(choice)
 
-        print ( "Specify sampleRatio? default=%s. Enter 1 to turn it off." % str(sampleRatio) )
-        choice = raw_input(" >>  ")
-        if choice != '':
-            sampleRatio=float(choice)
-
     tfidfData(stemmedTweetsFileName,
               dataTfidfTweetsPrefix   +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
               dataStopWordsPrefix     +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
               dataDictionaryFilePrefix+stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
               dataFeatureFilePrefix   +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
-              thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio)
+              thresholdUpper, thresholdBottom, stopWordCountBottom)
 
     main_menu()
     return
@@ -260,7 +242,7 @@ def tfIdfTweetDataMenu():
 ###############################################################################
 
 def clusterTweetsAllDataMenu():
-    print ("Clustering tweets with Clara using all available data") 
+    print ("Clustering tweets with Clara using all available data in same way") 
     fileResults = chooseFile(dataParsedTweetsPrefix, "cluster results" )
     if len(fileResults) == 0:
         return
@@ -272,8 +254,27 @@ def clusterTweetsAllDataMenu():
     k = readInt("How many clusters do You want to create?", 7)
 
     clusterClara(matrixFileName, k,
-                 dataClusterFilePrefix+"ALLD"+fileResults[len(dataParsedTweetsPrefix):],
-                 dataMedoidsFilePrefix+"ALLD"+fileResults[len(dataParsedTweetsPrefix):])
+                 dataClusterFilePrefix+"_6_"+fileResults[len(dataParsedTweetsPrefix):],
+                 dataMedoidsFilePrefix+"_6_"+fileResults[len(dataParsedTweetsPrefix):])
+
+    main_menu()
+    return
+
+###############################################################################
+
+def clusterTweetsLocTextMenu():
+    print ("Clustering tweets with Clara using two feature vectors: location and text")
+    fileResults = chooseFile(dataParsedTweetsPrefix, "cluster results" )
+    if len(fileResults) == 0:
+        return
+
+   #TODO
+
+    k = readInt("How many clusters do You want to create?", 7)
+
+    clusterClara(matrixFileName, k,
+                 dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
+                 dataMedoidsFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -287,9 +288,6 @@ def clusterTweetsCoordinatesMenu():
         return
 
     print ( "Making matrix file" )
-    extractCoord(fileResults, 
-                 dataParsedCoordPrefix +fileResults[len(dataParsedTweetsPrefix):])
-
     matrixFileName = dataTweetsMatrixFilePrefix+fileResults[len(dataParsedTweetsPrefix):]
     makeClusterMatrixFile(dataParsedCoordPrefix+fileResults[len(dataParsedTweetsPrefix):], 
                           matrixFileName)
@@ -302,8 +300,8 @@ def clusterTweetsCoordinatesMenu():
     k = readInt("How many clusters do You want to create?", 7)
 
     clusterClara(matrixFileName, k, 
-                 dataClusterFilePrefix+"COOR"+fileResults[len(dataParsedTweetsPrefix):],
-                 dataMedoidsFilePrefix+"COOR"+fileResults[len(dataParsedTweetsPrefix):])
+                 dataClusterFilePrefix+"5"+fileResults[len(dataParsedTweetsPrefix):],
+                 dataMedoidsFilePrefix+"5"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -352,11 +350,11 @@ menu_actions = {
     'main_menu': main_menu,
     '1': setup,
     '2': fetchTweetsMenu,
-    '3': fetchTweetsPeriodicallyMenu,
-    '4': parseTweetDataMenu,
-    '5': tfIdfTweetDataMenu,
+    '3': parseTweetDataMenu,
+    '4': tfIdfTweetDataMenu,
+    '5': clusterTweetsCoordinatesMenu,
     '6': clusterTweetsAllDataMenu,
-    '7': clusterTweetsCoordinatesMenu,
+    '7': clusterTweetsLocTextMenu,
     '8': viewResultsMenu,
     '9': viewRandMenu,
     '0': exit,

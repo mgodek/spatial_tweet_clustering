@@ -38,10 +38,17 @@ class TweetsCoordinates:
 		#print (obj)
 		#raise Exception('Invalid object passed to TweetsCoordinates, cannot intialize')
 
-    def toString(self):
-        summary  = "spdbcoordlong"+str(self.longitude)
+    def toString(self, addSpdbPrefix):
+        if addSpdbPrefix == True:
+            summary  = "spdbcoordlong"+str(self.longitude)
+        else:
+            summary  = str(self.longitude)
         summary += " "
-        summary += "spdbcoordlat"+str(self.latitude)
+
+        if addSpdbPrefix == True:
+            summary += "spdbcoordlat"+str(self.latitude)
+        else:
+            summary += str(self.latitude)
         return summary
 
 ###############################################################################
@@ -62,15 +69,26 @@ class TweetsPlace:
             self.isValid = False
         self.coordinates = coordinates
 
-    def toString(self):
-        summary  = "spdbcountryname"+self.country
+    def toString(self, addSpdbPrefix):
+        if addSpdbPrefix == True:
+            summary  = "spdbcountryname"+self.country
+        else:
+            summary  = self.country
         summary += " "
-        summary += "spdbplacename"+self.full_name
+
+        if addSpdbPrefix == True:
+            summary += "spdbplacename"+self.full_name
+        else:
+            summary += self.full_name
         summary += " "
-        summary += "spdbplacetype"+self.place_type
+
+        if addSpdbPrefix == True:
+            summary += "spdbplacetype"+self.place_type
+        else:
+            summary += self.place_type
         summary += " "
         #print( "type ", type(self.coordinates.longitude), self.coordinates.longitude )
-        summary += self.coordinates.toString()
+        summary += self.coordinates.toString(addSpdbPrefix)
         return summary
 
 ###############################################################################
@@ -79,7 +97,7 @@ def placeDecoder(obj):
     try:
         obj_iterator = iter(obj)
     except TypeError, te:
-        print( obj, 'placeDecoder is not iterable' )
+        #print( obj, 'placeDecoder is not iterable' )
         return TweetsPlace()
 
     if 'country' and 'full_name' and 'place_type' and 'bounding_box' in obj_iterator:
@@ -104,11 +122,11 @@ class TweetForClustering:
             self.place = placeDecoder(placeObj)	    
             if self.place.isValid == False:
                 self.isValid = False
-                print( 'TweetForClustering: placeObj is not valid' )
+                #print( 'TweetForClustering: placeObj is not valid' )
 
             if len(self.text) < 40: # TODO maybe should have other value
                 self.isValid = False
-                print( 'TweetForClustering: text is too short %d < %d' % (len(self.text), 50) )
+                #print( 'TweetForClustering: text is too short %d < %d' % (len(self.text), 50) )
 
             # decode userObj
             try:
@@ -116,19 +134,22 @@ class TweetForClustering:
                 self.userLocation = ' '.join(str(userObj['location']).replace(" ", "").split())
             except:
                 self.isValid = False
-                print( 'userObj is not iterable' )
+                #print( 'userObj is not iterable' )
                 return
 
     def dump(obj):
         for attr in dir(obj):
             print "obj.%s = %s" % (attr, getattr(obj, attr))
 
-    def toString(self):
+    def toString(self, addSpdbPrefix):
         summary  = self.text
         summary += " "
-        summary += "spdbuserlocation"+self.userLocation
+        if addSpdbPrefix == True:
+            summary += "spdbuserlocation"+self.userLocation
+        else:
+            summary += self.userLocation
         summary += " "
-        summary += self.place.toString()
+        summary += self.place.toString(addSpdbPrefix)
         return summary
 
 ###############################################################################
@@ -153,7 +174,7 @@ def tweetDecoder(obj):
 
 ###############################################################################
 
-def parseData(onlySpdbData, summaryRawTweets, parsedTweetsFileName):
+def parseData(onlySpdbData, summaryRawTweets, parsedTweetsFileName, addSpdbPrefix):
     print( "Parsing raw data..." )
         
     removeFile(parsedTweetsFileName)
@@ -177,7 +198,7 @@ def parseData(onlySpdbData, summaryRawTweets, parsedTweetsFileName):
             continue
 
 	if tweetDecoded.isValid == False:
-	    print("Invalid object file: %d" % tweetCountAll)
+	    #print("Invalid object file: %d" % tweetCountAll)
 	    try:
 	        print json.dump(tweet, indent=4, sort_keys=False)
 	    except TypeError, te:
@@ -192,7 +213,7 @@ def parseData(onlySpdbData, summaryRawTweets, parsedTweetsFileName):
 	exclude = set(string.punctuation)
 
         # remove punctuations
-	tweetForStem = ''.join(ch for ch in tweetDecoded.toString() if ch not in exclude)
+	tweetForStem = ''.join(ch for ch in tweetDecoded.toString(addSpdbPrefix) if ch not in exclude)
 
         # discard unicode specific characters
         tweetForStemClean = ''.join([i if ord(i) < 128 else ' ' for i in tweetForStem])
@@ -228,7 +249,7 @@ def stemData(summaryParsedTweets, stemmedTweetsFileName):
 ###############################################################################
 
 def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dictionaryFile,
-              featureFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio):
+              featureFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom):
     print( "TFIDFing stemmed data..." )
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
@@ -240,24 +261,6 @@ def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dicti
     for line in fIn:
         lineCount = lineCount + 1
     fIn.close()
-
-    stemFileReduced = "dataStemFileReduced.txt" # TODO drop reduce?
-    removeFile(stemFileReduced)
-    if sampleRatio < 1:
-        fOut = open(stemFileReduced, 'w')
-        outputSetSize = int(lineCount*sampleRatio)
-        print( "Desired tweet set size %d" % outputSetSize )
-        lineSet = random.sample(range(1,lineCount,1), outputSetSize)
-        lineCount = 0
-        fIn = open(summaryStemmedTweets, 'r')
-        for line in fIn:
-            lineCount = lineCount + 1
-            if lineCount in lineSet:
-                fOut.write(line)
-
-        fOut.close()
-        fIn.close()
-        summaryStemmedTweets = stemFileReduced
 
     # run C code for tfidf
     from ctypes import cdll
@@ -278,13 +281,12 @@ def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dicti
 
     tfidf = TFIDF()
     tfidf.run(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dictionaryFile, featureFileOut)
-    
-    removeFile(stemFileReduced)
 
     bashCommand = "wc -l "+dictionaryFile
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
     print( "TFIDF resulted features size is %s " % (output) )
+    print( "Results saved to %s %s %s %s" % (summaryTfidfTweets, featureFileOut, summaryStopWords, dictionaryFile) )
 
 ###############################################################################
 
