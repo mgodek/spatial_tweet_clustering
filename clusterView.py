@@ -76,7 +76,7 @@ def displayResultsOnMap(summaryParsedCoord, clusterResult, title):
     noGroups = np.amax(clusterV[:,1])
     print( "noGroups=%d" % noGroups )
 
-    colorsArray = ["bo", "ro", "go", "yo", "wo", "mo", "co"]
+    colorsArray = ["bo", "ro", "go", "yo", "wo", "mo", "co", "bx", "rx", "gx", "yx", "wx", "mx", "cx", "b<", "r<", "g<", "y<", "w<", "m<", "c<"]
 
     for i in range(1, noGroups+1):
         # get tweets indx for give group id
