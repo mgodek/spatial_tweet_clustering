@@ -42,12 +42,7 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
       library(cluster)
       library(tictoc)
       function(tweetsMatrixFile, k, outputFile) {
-         coorMat <- read.table(tweetsMatrixFile) #'summaryClaraTweetsMatrixFile.txt'
-
-         ###### FOR TESTING #########
-         #print( "NOTE!!! USING ONLY first 4k samples" )
-         #coorMat <- coorMat[1:4000,] #TODO comment out: reduce size for test
-         ###### FOR TESTING #########
+         coorMat <- read.table(tweetsMatrixFile)
 
          r <- as.numeric(t(coorMat[,1]))
          c <- as.numeric(t(coorMat[,2]))
@@ -65,11 +60,12 @@ def clusterClara(tweetsMatrixFile, k, outputFile):
     ''')
     
     r_execClara(tweetsMatrixFile, k, outputFile)
+    print( "Saved results to %s" % outputFile ) 
     return
 
 ###############################################################################
 
-def clusterResults(clusterLessNResultFile, clusterNaiveResultFile):
+def clusterResultsRandIdx(clusterLessNResultFile, clusterNaiveResultFile):
     print ( "Show clustering result" )
 
     r_execShowResults = robjects.r('''

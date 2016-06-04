@@ -227,12 +227,13 @@ def stemData(summaryParsedTweets, stemmedTweetsFileName):
 
 ###############################################################################
 
-def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords,
-              dictionaryFile, thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio):
+def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dictionaryFile,
+              featureFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio):
     print( "TFIDFing stemmed data..." )
     removeFile(summaryTfidfTweets)
     removeFile(summaryStopWords)
     removeFile(dictionaryFile)
+    removeFile(featureFileOut)
 
     fIn = open(stemmedTweetsFileName, 'r')
     lineCount = 0
@@ -269,18 +270,18 @@ def tfidfData(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords,
 	def preRun(self, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFileInOut):
 	    lib.TFIDF_CreateStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, thresholdUpper, thresholdBottom, stopWordCountBottom, stopWordFileInOut)
 
-	def run(self, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut):
-	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut)
+	def run(self, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut, featureFileOut):
+	    lib.TFIDF_UseStopWordList_Run(self.obj, stemFileIn, tfidfFileOut, stopWordFileInOut, dictionaryFileOut, featureFileOut)
 
     tfidf = TFIDF()
     tfidf.preRun(stemmedTweetsFileName, summaryTfidfTweets, c_double(thresholdUpper), c_double(thresholdBottom), c_uint(stopWordCountBottom), summaryStopWords)
 
     tfidf = TFIDF()
-    tfidf.run(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dictionaryFile)
+    tfidf.run(stemmedTweetsFileName, summaryTfidfTweets, summaryStopWords, dictionaryFile, featureFileOut)
     
     removeFile(stemFileReduced)
 
-    bashCommand = "wc -l dataTfidfDictionary.txt" # TODO
+    bashCommand = "wc -l "+dictionaryFile
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
     print( "TFIDF resulted features size is %s " % (output) )

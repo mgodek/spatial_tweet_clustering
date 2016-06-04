@@ -384,14 +384,13 @@ void StemmedFileInMemoryParser::countFeatures()
   }
 }
 
-void StemmedFileInMemoryParser::storeFeatures()
+void StemmedFileInMemoryParser::storeFeatures(const char* featureFile)
 {
-  std::string saveTo("summaryFeatures.txt");
-  std::cout << __FUNCTION__ << std::endl;
-    std::ofstream out(saveTo, std::ios::trunc | std::ios::out);
+    std::cout << __FUNCTION__ << std::endl;
+    std::ofstream out(featureFile, std::ios::trunc | std::ios::out);
     if(!out.is_open())
     {
-      std::cout << "Cannot create summaryFeatures file" << std::endl;
+      std::cout << "Cannot create features file" << std::endl;
       return;
     }
     

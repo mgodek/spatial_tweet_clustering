@@ -10,7 +10,7 @@ import tweetTransform
 import numpy as np
 from clusterView import displayResultsOnMap
 from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile, extractCoord, removeFile
-from clusterModule import setupCluster, clusterClara, clusterResults
+from clusterModule import setupCluster, clusterClara, clusterResultsRandIdx
 from time import gmtime, strftime
 from similarity import similarityCoord
 import re
@@ -22,10 +22,12 @@ dataParsedCoordPrefix     = 'dataParsedCoord'
 dataParsedTweetsPrefix    = 'dataParsedTweets'
 dataStemmedTweetsPrefix   = 'dataStemmedTweets'
 dataTfidfTweetsPrefix     = 'dataTfidfTweets'
+dataFeatureFilePrefix     = 'dataTfidfFeatures'
 dataStopWordsPrefix       = 'dataTfidfStopWords'
 dataDictionaryFilePrefix  = 'dataTfidfDictionary'
 dataTweetsMatrixFilePrefix= "dataClaraTweetsMatrixFile"
 dataClusterFilePrefix     = "dataClaraOutput"
+dataClusterTypeInfixLength= 4
 
 ###############################################################################
 
@@ -248,6 +250,7 @@ def tfIdfTweetDataMenu():
               dataTfidfTweetsPrefix   +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
               dataStopWordsPrefix     +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
               dataDictionaryFilePrefix+stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
+              dataFeatureFilePrefix   +stemmedTweetsFileName[len(dataStemmedTweetsPrefix):],
               thresholdUpper, thresholdBottom, stopWordCountBottom, sampleRatio)
 
     main_menu()
@@ -263,11 +266,11 @@ def clusterTweetsAllDataMenu():
 
     print ( "Making matrix file" )
     matrixFileName = dataTweetsMatrixFilePrefix+fileResults[len(dataParsedTweetsPrefix):]
-    makeClusterMatrixFile('summaryFeatures.txt', matrixFileName) # TODO file rename
+    makeClusterMatrixFile(dataFeatureFilePrefix+fileResults[len(dataParsedTweetsPrefix):], matrixFileName)
 
     k = readInt("How many clusters do You want to create?", 7)
 
-    clusterClara(matrixFileName, k, dataClusterFilePrefix+fileResults[len(dataParsedTweetsPrefix):])
+    clusterClara(matrixFileName, k, dataClusterFilePrefix+"ALLD"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -296,7 +299,7 @@ def clusterTweetsCoordinatesMenu():
     k = readInt("How many clusters do You want to create?", 7)
 
     clusterClara(matrixFileName, k, 
-                 dataClusterFilePrefix+fileResults[len(dataParsedTweetsPrefix):])
+                 dataClusterFilePrefix+"COOR"+fileResults[len(dataParsedTweetsPrefix):])
 
     main_menu()
     return
@@ -308,7 +311,7 @@ def viewResultsMenu():
     if len(fileResults) == 0:
         return
 
-    displayResultsOnMap(dataParsedCoordPrefix+fileResults[len(dataClusterFilePrefix):], fileResults, "Tweets' coordinate data")
+    displayResultsOnMap(dataParsedCoordPrefix+fileResults[len(dataClusterFilePrefix)+dataClusterTypeInfixLength:], fileResults, "Tweets data")
 
     main_menu()
     return
@@ -316,7 +319,15 @@ def viewResultsMenu():
 ###############################################################################
 
 def viewRandMenu():
-    clusterResults(dataClusterLessNResultFilePrefix, dataClusterNaiveResultFilePrefix)
+    fileResults1 = chooseFile(dataClusterFilePrefix, "choose as first cluster result for rand index input" )
+    if len(fileResults1) == 0:
+        return
+
+    fileResults2 = chooseFile(dataClusterFilePrefix, "choose as second cluster result for rand index input" )
+    if len(fileResults2) == 0:
+        return
+
+    clusterResultsRandIdx(fileResults1, fileResults2)
     main_menu()
     return
 

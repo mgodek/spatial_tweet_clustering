@@ -34,7 +34,7 @@ public:
     
     void countFeatures();
     
-    void storeFeatures();
+    void storeFeatures(const char* featureFile);
 
     // document index mapped to result for file
     typedef std::unordered_map<unsigned int, std::unordered_map<unsigned, double>*> TfIdfResults;
@@ -90,13 +90,14 @@ extern "C" {
                                     const char* stemmedFile,
                                     const char* tfidfFile,
                                     const char* stopWordFile,
-                                    const char* dictFile )
+                                    const char* dictFile,
+                                    const char* featureFile )
     {
 	parser->loadData(stemmedFile, stopWordFile);
 	parser->countTfidf();
 	parser->countFeatures();
         parser->storeTfidfInFile(tfidfFile, dictFile);
-	parser->storeFeatures();
+	parser->storeFeatures(featureFile);
 	std::cout << "Done with all in TFIDF_UseStopWordList_Run" << std::endl;
     }
 
