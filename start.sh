@@ -21,8 +21,6 @@ then
 fi
 
 sudo apt-get install python-matplotlib
-sudo pip install geojson
-#sudo pip install geopy
 sudo pip install tweepy
 sudo pip install rpy2
 
