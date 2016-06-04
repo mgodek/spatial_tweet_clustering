@@ -56,13 +56,50 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
             distanceVec[i] = np.linalg.norm(attributes-groupCollection[i])
         #print(distanceVec)
         distance = 0
+        # TODO here we try to not have circles around a europs medoid. instead try to break it
         for i in range(0, len(distanceVec)):
-            distance += log10(distanceVec[i][0]+1) # need to move from zero a bit for log
+            if attributes[0] < groupCollection[i][0]:
+                distance -= log10(distanceVec[i][0]+1) # need to move from zero a bit for log
+            else:
+                distance += log10(distanceVec[i][0]+1) # need to move from zero a bit for log
         
         distanceFile.write("nothing " + str(distance)+"\n")
 
     tweetAttributeFile.close()
     medoidFile.close()
+    distanceFile.close()
+
+###############################################################################
+
+def distanceSqrLongPlusLat(tweetAttributeFileName, distanceFileName):
+    print("Counting distance by long^2+lat using %s %s" % (tweetAttributeFileName, distanceFileName) )
+    
+    tweetAttributeFile = open(tweetAttributeFileName, 'r')
+
+    removeFile(distanceFileName) 
+    distanceFile = open(distanceFileName, 'w')
+
+    # count distances
+    for line in tweetAttributeFile:
+        #skip row name
+        line = line.split(' ', 1)[1]
+
+        #split attributes
+        featureCollection = line.split(' ')
+
+        attributes = ndarray((len(featureCollection),1),float)
+        # calc distance of each attribute of a row (sample tweet) from each medoid column
+        for attributeIdx in range(0, len(featureCollection)):
+            attributes[attributeIdx] = float(' '.join(featureCollection[attributeIdx].split()))
+
+        attributes[1] += 40 # make longitude on + side
+        #if attributes[0] > 40: # try to chnage strips to checkers
+        #    attributes[0] = -1*attributes[0]
+        distance = attributes[1]*attributes[1] + attributes[0]
+        
+        distanceFile.write("nothing " + str(distance)+"\n")
+
+    tweetAttributeFile.close()
     distanceFile.close()
 
 ###############################################################################

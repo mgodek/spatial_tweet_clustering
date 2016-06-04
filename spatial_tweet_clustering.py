@@ -12,7 +12,7 @@ from clusterView import displayResultsOnMap
 from tweetTransform import parseData, stemData, tfidfData, makeClusterMatrixFile, extractCoord, removeFile
 from clusterModule import setupCluster, clusterClara, clusterResultsRandIdx
 from time import gmtime, strftime
-from similarity import similarityCoord, distanceMedoid
+from similarity import similarityCoord, distanceMedoid, distanceSqrLongPlusLat
 import re
 import time
 
@@ -281,12 +281,13 @@ def clusterTweetsLocTextMenu():
     makeClusterMatrixFile(inputFileName, matrixFileName)
 
     # hardcode value of medoids. Higher means more presicion in distances
-    medoidCountPreClustering = 30
+    medoidCountPreClustering = 10
     clusterClara(matrixFileName, medoidCountPreClustering,
                  dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
                  medoidFileName)
     distanceFileName = "dataDistanceFileNameCoord_7_" #TODO use name prefix convention
     distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+    #distanceSqrLongPlusLat(inputFileName,distanceFileName)
     # normalize after
 
     ############################# COORD
@@ -305,9 +306,9 @@ def clusterTweetsLocTextMenu():
     clusterClara(matrixFileName, medoidCountPreClustering,
                  dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
                  medoidFileName)
-    distanceFileName = "dataDistanceFileNameText_7_" #TODO use name prefix convention
+    #distanceFileName = "dataDistanceFileNameText_7_" #TODO use name prefix convention
     # normalize before
-    distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+    #distanceMedoid(inputFileName, medoidFileName, distanceFileName)
 
     ############################# TEXT
 
