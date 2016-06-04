@@ -24,6 +24,18 @@ StemmedFileInMemoryParser::StemmedFileInMemoryParser():
     _nextCoord(1), // R needs indecies starting from 1
     minimalValue(DBL_MAX)
 {
+  this->_max.longitude = DBL_MIN;
+  this->_max.latitude = DBL_MIN;
+  this->_max.countOfNonZero = DBL_MIN;
+  this->_max.distanceFromMax = DBL_MIN;
+  this->_max.distanceFromMean = DBL_MIN;
+  this->_max.distanceFromZero = DBL_MIN;
+  this->_min.longitude = DBL_MAX;
+  this->_min.latitude = DBL_MAX;
+  this->_min.countOfNonZero = DBL_MAX;
+  this->_min.distanceFromMax = DBL_MAX;
+  this->_min.distanceFromMean = DBL_MAX;
+  this->_min.distanceFromZero = DBL_MAX;
 }
 
 StemmedFileInMemoryParser::~StemmedFileInMemoryParser()
@@ -327,6 +339,42 @@ double euclideanDistance(
   return sqrt(result);
 }
 
+double getMax(double value, double currentMax)
+{
+  return value > currentMax ? value : currentMax;
+}
+
+double getMin(double value, double currentMin)
+{
+  return value < currentMin ? value : currentMin;
+}
+
+double safeNumericNormalization(double valueToNormalize, double max, double min)
+{
+  return ((valueToNormalize * 32) - (min * 32)) / max;
+}
+
+void StemmedFileInMemoryParser::normalizeFeatures()
+{
+  const unsigned int numPoints = this->tfIdfResults.size();
+  bool isGeoPresent = this->_geoPerDoc.size() > 0;
+  for (unsigned int pIndex = 0; pIndex < numPoints; ++pIndex)
+  {
+    Feature &f = this->_dataFeatures[pIndex];
+    if (isGeoPresent)
+    {
+      this->_dataFeatures[pIndex].longitude = safeNumericNormalization(f.longitude, this->_max.longitude, this->_min.longitude);
+      this->_dataFeatures[pIndex].latitude = safeNumericNormalization(f.latitude, this->_max.latitude, this->_min.latitude);
+    }
+    
+    this->_dataFeatures[pIndex].countOfNonZero = safeNumericNormalization(f.countOfNonZero, this->_max.countOfNonZero, this->_min.countOfNonZero);
+    this->_dataFeatures[pIndex].distanceFromMax = safeNumericNormalization(f.distanceFromMax, this->_max.distanceFromMax, this->_min.distanceFromMax);
+    this->_dataFeatures[pIndex].distanceFromMean = safeNumericNormalization(f.distanceFromMean, this->_max.distanceFromMean, this->_min.distanceFromMean);
+    this->_dataFeatures[pIndex].distanceFromZero = safeNumericNormalization(f.distanceFromZero, this->_max.distanceFromZero, this->_min.distanceFromZero);
+  }
+}
+
+
 void StemmedFileInMemoryParser::countFeatures()
 {
   // find mean point
@@ -355,19 +403,34 @@ void StemmedFileInMemoryParser::countFeatures()
     }
   }
   
+  bool isGeoPresent = this->_geoPerDoc.size() > 0;
+  
   for(unsigned int pIndex = 0; pIndex < numPoints; ++pIndex)
   {
     Feature f;
-    f.longitude = this->_geoPerDoc[pIndex].first;
-    f.latitude = this->_geoPerDoc[pIndex].second;
+    if (isGeoPresent)
+    {
+      f.longitude = this->_geoPerDoc[pIndex].first;
+      f.latitude = this->_geoPerDoc[pIndex].second;
+      this->_max.latitude = getMax(f.latitude, this->_max.latitude);
+      this->_min.latitude = getMin(f.latitude, this->_min.latitude);
+      this->_max.longitude = getMax(f.longitude, this->_max.longitude);
+      this->_min.longitude = getMin(f.longitude, this->_min.longitude);
+    }
     std::unordered_map<unsigned int, double>* point = this->tfIdfResults[pIndex];
-    f.countOfNonZero = point->size();
+    f.countOfNonZero = (double)point->size();
     std::pair<double, double> meanAndZeroDist = euclideanDistanceFromZeroAndMean(meanPoint, zeroPoint, *point, numDim);
     f.distanceFromMean = meanAndZeroDist.first;
     f.distanceFromZero = meanAndZeroDist.second;
     if(f.distanceFromZero > maxDistance)
       maxPointIndex = pIndex;
     this->_dataFeatures.insert({pIndex, f});
+    this->_max.countOfNonZero = getMax(f.countOfNonZero, this->_max.countOfNonZero);
+    this->_min.countOfNonZero = getMin(f.countOfNonZero, this->_min.countOfNonZero);
+    this->_max.distanceFromMean = getMax(f.distanceFromMean, this->_max.distanceFromMean);
+    this->_min.distanceFromMean = getMin(f.distanceFromMean, this->_min.distanceFromMean);
+    this->_max.distanceFromZero = getMax(f.distanceFromZero, this->_max.distanceFromZero);
+    this->_min.distanceFromZero = getMin(f.distanceFromZero, this->_min.distanceFromZero);
   }
   
   std::unordered_map<unsigned int, double>* maxPoint =  this->tfIdfResults[maxPointIndex];
@@ -381,7 +444,12 @@ void StemmedFileInMemoryParser::countFeatures()
     {
       this->_dataFeatures[pIndex].distanceFromMax = 0.0;
     }
+    
+    this->_max.distanceFromMax = getMax(this->_dataFeatures[pIndex].distanceFromMax, this->_max.distanceFromMax);
+    this->_min.distanceFromMax = getMin(this->_dataFeatures[pIndex].distanceFromMax, this->_min.distanceFromMax);
   }
+
+  this->normalizeFeatures();
 }
 
 void StemmedFileInMemoryParser::storeFeatures(const char* featureFile)
