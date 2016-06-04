@@ -59,9 +59,14 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
         # TODO here we try to not have circles around a europs medoid. instead try to break it
         for i in range(0, len(distanceVec)):
             if attributes[0] < groupCollection[i][0]:
-                distance -= log10(distanceVec[i][0]+1) # need to move from zero a bit for log
-            else:
                 distance += log10(distanceVec[i][0]+1) # need to move from zero a bit for log
+            else:
+                distance += 4*log10(pow(distanceVec[i][0]+1,4)) # need to move from zero a bit for log
+
+            if attributes[1] > groupCollection[i][1]:
+                distance += log10(distanceVec[i][0]+1) # need to move from zero a bit for log
+            else:
+                distance += 4*log10(pow(distanceVec[i][0]+1,4))
         
         distanceFile.write("nothing " + str(distance)+"\n")
 
