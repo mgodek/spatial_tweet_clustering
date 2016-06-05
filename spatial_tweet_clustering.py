@@ -25,6 +25,7 @@ dataTfidfTweetsPrefix     = 'dataTfidfTweets'
 dataFeatureFilePrefix     = 'dataTfidfFeatures'
 dataStopWordsPrefix       = 'dataTfidfStopWords'
 dataDictionaryFilePrefix  = 'dataTfidfDictionary'
+dataDistanceFileNamePrefix= 'dataSimilarityDistance'
 dataTweetsMatrixFilePrefix= "dataClaraTweetsMatrixFile"
 dataClusterFilePrefix     = "dataClusteredOutput"
 dataClusterTypeInfixLength= 3
@@ -271,56 +272,47 @@ def clusterTweetsLocTextMenu():
     if len(fileResults) == 0:
         return
 
+    BASE_FILE_NAME = fileResults[len(dataParsedTweetsPrefix):]
+
+    inputFileCollection = []
+
     ############################# COORD
-
-    inputFileName = dataParsedCoordPrefix+fileResults[len(dataParsedTweetsPrefix):]
-    medoidFileName = dataMedoidsFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
-
-    print ( "Making matrix file for getting coordinate medoids from clustering" )
-    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
-    makeClusterMatrixFile(inputFileName, matrixFileName)
-
-    # hardcode value of medoids. Higher means more presicion in distances
-    medoidCountPreClustering = 10
-    clusterClara(matrixFileName, medoidCountPreClustering,
-                 dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
-                 medoidFileName)
-    distanceFileName = "dataDistanceFileNameCoord_7_" #TODO use name prefix convention
-    distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+    inputFileCollection.append(dataParsedCoordPrefix+BASE_FILE_NAME)
     #distanceSqrLongPlusLat(inputFileName,distanceFileName)
-    # TODO normalize after
-
-    ############################# COORD
+    # TODO normalize after counting distanceMedoid
 
     ############################# TEXT
+    #TODO @Zbigniew enable inputFileCollection.append(dataFeatureFilePrefix+BASE_FILE_NAME)
 
-    inputFileName = dataFeatureFilePrefix+fileResults[len(dataParsedTweetsPrefix):]
-    medoidFileName = dataMedoidsFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+    # common distance file
+    distanceFileName = dataDistanceFileNamePrefix+"_7_"+BASE_FILE_NAME
+    removeFile(distanceFileName)
 
-    print ( "Making matrix file for getting coordinate medoids from clustering" )
-    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
-    makeClusterMatrixFile(inputFileName, matrixFileName)
+    for inputFileName in inputFileCollection:
 
-    # hardcode value of medoids. Higher means more presicion in distances
-    medoidCountPreClustering = 30
-    clusterClara(matrixFileName, medoidCountPreClustering,
-                 dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
-                 medoidFileName)
-    distanceFileName = "dataDistanceFileNameText_7_" #TODO use name prefix convention
-    # TODO normalize before
-    distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+        medoidFileName = dataMedoidsFilePrefix+"_7_"+BASE_FILE_NAME
+        removeFile(medoidFileName)
+        matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+BASE_FILE_NAME
+        removeFile(matrixFileName)
+        makeClusterMatrixFile(inputFileName, matrixFileName)
+        # hardcode value of medoids. Higher might mean more presicion in distances
+        medoidCountPreClustering = 20
+        clusterClara(matrixFileName, medoidCountPreClustering,
+                     dataClusterFilePrefix+"_7_"+BASE_FILE_NAME,
+                     medoidFileName)
 
-    ############################# TEXT
+        distanceMedoid(inputFileName, medoidFileName, distanceFileName)
+
 
     k = readInt("How many clusters do You want to create?", 7)
 
     # create matrix file for coords
-    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):]
+    matrixFileName = dataTweetsMatrixFilePrefix+"_7_"+BASE_FILE_NAME
     makeClusterMatrixFile(distanceFileName, matrixFileName) # TODO concatenate columns from 2 files distanceFileName
 
     clusterClara(matrixFileName, k,
-                 dataClusterFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):],
-                 dataMedoidsFilePrefix+"_7_"+fileResults[len(dataParsedTweetsPrefix):])
+                 dataClusterFilePrefix+"_7_"+BASE_FILE_NAME,
+                 dataMedoidsFilePrefix+"_7_"+BASE_FILE_NAME)
 
     main_menu()
     return

@@ -4,18 +4,27 @@ from tweetTransform import removeFile
 from numpy import ndarray
 import numpy as np
 from cmath import log10
+from math import fabs
 
 ###############################################################################
 
 def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
     print("Counting distance from medoids using %s %s %s" % (tweetAttributeFileName,medoidFileName, distanceFileName) )
     
-    tweetAttributeFile = open(tweetAttributeFileName, 'r')
-    medoidFile = open(medoidFileName, 'r')
+    previousDistances = []
+    # read existing distances
+    try:
+        distanceFile = open(distanceFileName, 'r')
+        for line in distanceFile:
+            previousDistances.append(line.replace('\n', ''))
+        distanceFile.close()
+    except IOError:
+        print( "%s no previous data" % distanceFileName )
 
-    removeFile(distanceFileName) 
     distanceFile = open(distanceFileName, 'w')
 
+    tweetAttributeFile = open(tweetAttributeFileName, 'r')
+    medoidFile = open(medoidFileName, 'r')
     attributesLine = medoidFile.readline() # ignore attributes names
 
     # read medoids to 2d array : groups/attributes
@@ -39,6 +48,7 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
     #print(groupCollection)
 
     # count distances to medoids
+    lineIdx = 0
     for line in tweetAttributeFile:
         #skip row name
         line = line.split(' ', 1)[1]
@@ -51,24 +61,31 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
         for attributeIdx in range(0, len(featureCollection)):
             attributes[attributeIdx] = float(' '.join(featureCollection[attributeIdx].split()))
 
+        # calc distance from given point to each medoid
         distanceVec = ndarray((len(groupCollection),len(featureCollection)),float)
         for i in range(0, len(groupCollection)):
             distanceVec[i] = np.linalg.norm(attributes-groupCollection[i])
         #print(distanceVec)
+
         distance = 0
         # TODO here we try to not have circles around a europs medoid. instead try to break it
         for i in range(0, len(distanceVec)):
-            if attributes[0] < groupCollection[i][0]:
-                distance += log10(distanceVec[i][0]+1) # need to move from zero a bit for log
-            else:
-                distance += 4*log10(pow(distanceVec[i][0]+1,4)) # need to move from zero a bit for log
+            for j in range(0, len(attributes)):
+                multitude = 1 #+ 2*j
+                if (j % 2 == 0) and (attributes[j] > groupCollection[i][j]):
+                    multitude += 3 #* (attributes[j] - groupCollection[i][j])
 
-            if attributes[1] > groupCollection[i][1]:
-                distance += log10(distanceVec[i][0]+1) # need to move from zero a bit for log
-            else:
-                distance += 4*log10(pow(distanceVec[i][0]+1,4))
-        
-        distanceFile.write("nothing " + str(distance)+"\n")
+                if (j % 2 == 1) and (attributes[j] <= groupCollection[i][j]):
+                    multitude += 3 #* (groupCollection[i][j]-attributes[j])
+                
+                #multitude = 1 # this line makes the groups circular again
+                distance += multitude*log10(distanceVec[i][j]+1) # need to move from zero a bit for log
+        if ( len(previousDistances) == 0 ):
+            # need to have a first column with no data
+            distanceFile.write("nothing " + str(distance)+"\n")
+        else:
+            distanceFile.write(previousDistances[lineIdx] + " " + str(distance)+"\n")
+        lineIdx += 1
 
     tweetAttributeFile.close()
     medoidFile.close()
