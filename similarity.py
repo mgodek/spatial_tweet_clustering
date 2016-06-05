@@ -49,6 +49,9 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
 
     # count distances to medoids
     lineIdx = 0
+    maxDist = 0.0
+    minDist = float('inf') 
+    currentDistances = []
     for line in tweetAttributeFile:
         #skip row name
         line = line.split(' ', 1)[1]
@@ -67,7 +70,7 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
             distanceVec[i] = np.linalg.norm(attributes-groupCollection[i])
         #print(distanceVec)
 
-        distance = 0
+        distance = 0.0
         # TODO here we try to not have circles around a europs medoid. instead try to break it
         for i in range(0, len(distanceVec)):
             for j in range(0, len(attributes)):
@@ -80,11 +83,20 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
                 
                 #multitude = 1 # this line makes the groups circular again
                 distance += multitude*log10(distanceVec[i][j]+1) # need to move from zero a bit for log
+                currentDistances.append(dinstance)
+                #gathering min and max to use for normalization
+                if distance > maxDist:
+                    maxDist = distance
+                if distance < minDist:
+                    minDist = distance
+                
+    for distance in currentDistances: 
+        #every written dinstance will be normalized
         if ( len(previousDistances) == 0 ):
             # need to have a first column with no data
-            distanceFile.write("nothing " + str(distance)+"\n")
+            distanceFile.write("nothing " + str((distance*32 - minDist*32)/maxDist)+"\n")
         else:
-            distanceFile.write(previousDistances[lineIdx] + " " + str(distance)+"\n")
+            distanceFile.write(previousDistances[lineIdx] + " " + str((distance*32 - minDist*32)/maxDist)+"\n")
         lineIdx += 1
 
     tweetAttributeFile.close()

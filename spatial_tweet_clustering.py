@@ -279,10 +279,9 @@ def clusterTweetsLocTextMenu():
     ############################# COORD
     inputFileCollection.append(dataParsedCoordPrefix+BASE_FILE_NAME)
     #distanceSqrLongPlusLat(inputFileName,distanceFileName)
-    # TODO normalize after counting distanceMedoid
 
     ############################# TEXT
-    #TODO @Zbigniew enable inputFileCollection.append(dataFeatureFilePrefix+BASE_FILE_NAME)
+    inputFileCollection.append(dataFeatureFilePrefix+BASE_FILE_NAME)
 
     # common distance file
     distanceFileName = dataDistanceFileNamePrefix+"_7_"+BASE_FILE_NAME
@@ -300,7 +299,7 @@ def clusterTweetsLocTextMenu():
         clusterClara(matrixFileName, medoidCountPreClustering,
                      dataClusterFilePrefix+"_7_"+BASE_FILE_NAME,
                      medoidFileName)
-
+        #there we count distances and normalize them for both cases
         distanceMedoid(inputFileName, medoidFileName, distanceFileName)
 
 
