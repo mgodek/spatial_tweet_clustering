@@ -82,20 +82,36 @@ def distanceMedoid(tweetAttributeFileName, medoidFileName, distanceFileName):
                     multitude += 3 #* (groupCollection[i][j]-attributes[j])
                 
                 #multitude = 1 # this line makes the groups circular again
-                distance += multitude*log10(distanceVec[i][j]+1) # need to move from zero a bit for log
-                currentDistances.append(dinstance)
-                #gathering min and max to use for normalization
-                if distance > maxDist:
-                    maxDist = distance
-                if distance < minDist:
-                    minDist = distance
-                
+                distance += float(multitude)*log10(distanceVec[i][j]+1) # need to move from zero a bit for log
+        real = float(0)
+        if isinstance(distance, complex) and distance.imag != 0:
+            print ("Distance: (%s) is complex at line %d (%d,%d)"%(distance, lineIdx, i, j))
+            raise TypeError()
+        elif isinstance(distance, complex) and distance.imag == 0:
+            real = distance.real
+            currentDistances.append(real)
+        else:
+            real = distance
+            currentDistances.append(distance)
+        #gathering min and max to use for normalization
+        if real > maxDist:
+            maxDist = real
+        if real < minDist:
+            minDist = real
+        lineIdx += 1
+    lineIdx = 0
+    print "previousDistances len is %d" % len(previousDistances)
+    print "currentDistances len is %d" % len(currentDistances)
+    prevDistLen = len(previousDistances)
     for distance in currentDistances: 
-        #every written dinstance will be normalized
-        if ( len(previousDistances) == 0 ):
+        #every written distance will be normalized
+        if prevDistLen == 0:
             # need to have a first column with no data
             distanceFile.write("nothing " + str((distance*32 - minDist*32)/maxDist)+"\n")
         else:
+            if prevDistLen <= lineIdx:
+                print "line index is %d "%lineIdx
+                raise IndexError()
             distanceFile.write(previousDistances[lineIdx] + " " + str((distance*32 - minDist*32)/maxDist)+"\n")
         lineIdx += 1
 
